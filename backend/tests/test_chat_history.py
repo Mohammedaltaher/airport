@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from dma.backend.app.config import Settings
 from dma.backend.app.main import create_app
+from dma.backend.app.policies import PolicyRetrievalError
 
 
 def test_conversations_persist_and_are_scoped_to_browser(tmp_path):
@@ -52,3 +53,18 @@ def test_failed_answer_does_not_create_completed_history(tmp_path):
     owner = str(uuid4())
     assert client.post('/api/v1/assistant', json={'client_id': owner, 'question': 'Review queues'}).status_code == 504
     assert client.get('/api/v1/conversations', params={'client_id': owner}).json()['conversations'] == []
+
+
+def test_embedding_rate_limit_returns_actionable_error_without_provider_secrets(tmp_path):
+    settings = Settings(chat_database=tmp_path / 'history.db', api_key='test-secret', model='mock')
+    app = create_app(settings)
+    cause = RuntimeError('test-secret provider detail')
+    cause.code = 429
+    failure = PolicyRetrievalError('Retrieval failed')
+    failure.__cause__ = cause
+    app.state.assistant = SimpleNamespace(answer=AsyncMock(side_effect=failure))
+    response = TestClient(app).post('/api/v1/assistant', json={'question': 'Review queues'})
+    assert response.status_code == 429
+    assert response.headers['retry-after'] == '60'
+    assert 'one minute' in response.json()['detail']
+    assert 'test-secret' not in response.text

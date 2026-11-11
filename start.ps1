@@ -16,7 +16,7 @@ $PythonPath = (Resolve-Path -LiteralPath $PythonPath).Path
 $backendPath = Join-Path $dmaRoot 'backend'
 $frontendPath = Join-Path $dmaRoot 'frontend'
 $env:PYTHONUTF8 = '1'
-& $PythonPath -c 'import fastapi, pandas, google.genai, uvicorn'
+& $PythonPath -c 'import fastapi, pandas, google.genai, uvicorn, llama_index.core'
 if ($LASTEXITCODE -ne 0) { throw 'Install backend/requirements.txt with the selected Python first.' }
 if ($Mode -eq 'built') {
     if (-not (Test-Path -LiteralPath (Join-Path $frontendPath 'dist/index.html'))) { throw 'Run npm run build inside dma/frontend first.' }

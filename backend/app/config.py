@@ -18,6 +18,8 @@ class Settings:
     database: Path = field(default_factory=lambda: path_setting('DMA_DATABASE_PATH', 'backend/data/database/airport_ops.db'))
     chat_database: Path = field(default_factory=lambda: path_setting('DMA_CHAT_DATABASE_PATH', 'backend/data/chat/history.db'))
     documents: Path = field(default_factory=lambda: path_setting('DMA_DOCUMENTS_PATH', 'backend/data/documents'))
+    policy_index: Path = field(default_factory=lambda: path_setting('DMA_POLICY_INDEX_PATH', 'backend/data/policy_index'))
+    embedding_model: str = field(default_factory=lambda: os.getenv('GEMINI_EMBEDDING_MODEL', 'gemini-embedding-001'))
     api_key: str = field(default_factory=lambda: os.getenv('GEMINI_API_KEY', ''))
     model: str = field(default_factory=lambda: os.getenv('GEMINI_MODEL', ''))
     origins: list[str] = field(default_factory=lambda: os.getenv('DMA_ALLOWED_ORIGINS', 'http://localhost:4321,http://127.0.0.1:4321').split(','))

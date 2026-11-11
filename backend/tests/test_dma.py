@@ -11,6 +11,7 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 from google.genai import types
+from llama_index.core.embeddings import MockEmbedding
 
 from dma.backend.app.analytics import Analytics, queue_statistics
 from dma.backend.app.assistant import NOT_IN_DOCUMENTS, POLICY_PROMPT, Assistant
@@ -184,7 +185,7 @@ def test_missing_database_is_degraded(settings):
 
 
 def test_policy_retrieval_statuses_and_arabic(settings):
-    store = PolicyStore(settings.documents)
+    store = PolicyStore(settings.documents, embed_model=MockEmbedding(embed_dim=8))
     current = store.search('ما هي سياسة الانتظار؟', date(2026, 9, 1), date(2026, 9, 30))
     assert all(clause['document'] not in {'GIA-DRAFT-11', 'GIA-SUP-12'} for clause in current)
     assert any(c['document'] == 'GIA-STD-03' and c['section'] == '5.3' for c in current)
@@ -194,7 +195,7 @@ def test_policy_retrieval_statuses_and_arabic(settings):
 
 
 def test_mocked_gemini_tools_and_audit(settings):
-    assistant = Assistant(settings, Analytics(settings), PolicyStore(settings.documents))
+    assistant = Assistant(settings, Analytics(settings), PolicyStore(settings.documents, embed_model=MockEmbedding(embed_dim=8)))
     call = types.FunctionCall(name='staffing_analysis', args={})
     tool_response = SimpleNamespace(function_calls=[call], candidates=[SimpleNamespace(content=types.Content(role='model', parts=[types.Part(function_call=call)]))])
     final = SimpleNamespace(function_calls=[], text='Finding: one recorded gap. Policy: GIA-STD-03 §5.3. Limitations: missing hours.')
@@ -219,7 +220,7 @@ def test_assistant_provider_failure_timeout_and_round_limit(settings):
     assert response.status_code == 502 and 'test-secret' not in response.text
     fake.answer = AsyncMock(side_effect=TimeoutError())
     assert client.post('/api/v1/assistant', json={'question': 'Review queues'}).status_code == 504
-    assistant = Assistant(settings, Analytics(settings), PolicyStore(settings.documents))
+    assistant = Assistant(settings, Analytics(settings), PolicyStore(settings.documents, embed_model=MockEmbedding(embed_dim=8)))
     call = types.FunctionCall(name='queue_analysis', args={})
     response = SimpleNamespace(function_calls=[call], candidates=[SimpleNamespace(content=types.Content(role='model', parts=[types.Part(function_call=call)]))])
     assistant.gateway.generate = AsyncMock(return_value=response)
@@ -229,7 +230,7 @@ def test_assistant_provider_failure_timeout_and_round_limit(settings):
 
 
 def test_assistant_uses_bounded_conversation_context_with_fresh_evidence(settings):
-    assistant = Assistant(settings, Analytics(settings), PolicyStore(settings.documents))
+    assistant = Assistant(settings, Analytics(settings), PolicyStore(settings.documents, embed_model=MockEmbedding(embed_dim=8)))
     captured = []
 
     async def generate(contents, use_tools=True):

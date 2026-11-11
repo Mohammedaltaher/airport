@@ -16,7 +16,7 @@ from .assistant import Assistant
 from .chat_history import ChatHistory
 from .config import PROJECT, Settings
 from .models import AssistantRequest, Filters
-from .policies import PolicyStore
+from .policies import PolicyRetrievalError, PolicyStore
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -91,11 +91,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if previous is None:
                 raise HTTPException(404, 'Conversation not found.')
         if app.state.assistant is None:
-            app.state.assistant = Assistant(settings, analytics, PolicyStore(settings.documents))
+            app.state.assistant = Assistant(settings, analytics, PolicyStore.from_settings(settings))
         try:
             answer = await app.state.assistant.answer(request, history=previous['messages'] if previous else [])
         except TimeoutError:
             raise HTTPException(504, 'The assistant exceeded its 60-second deadline. Try a narrower question or period.')
+        except PolicyRetrievalError as exc:
+            if getattr(exc.__cause__, 'code', None) == 429:
+                raise HTTPException(429, 'Gemini embedding rate limit reached. Please retry in one minute. Completed policy indexing batches are saved.', headers={'Retry-After': '60'})
+            raise HTTPException(502, 'Policy retrieval failed. Check GEMINI_EMBEDDING_MODEL access, Gemini credentials and quota, and DMA_POLICY_INDEX_PATH write permissions.')
         except (sqlite3.Error, FileNotFoundError):
             raise
         except Exception:

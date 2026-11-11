@@ -1,8 +1,20 @@
 """Explicit date-aware rules and clause retrieval from the provided register."""
 from datetime import date, datetime
 from pathlib import Path
+from threading import Lock
 import csv
+import hashlib
+import json
 import re
+
+from llama_index.core import StorageContext, VectorStoreIndex, load_index_from_storage
+from llama_index.core.base.embeddings.base import BaseEmbedding
+from llama_index.core.indices.vector_store.retrievers import VectorIndexRetriever
+from llama_index.core.schema import MetadataMode, TextNode
+from llama_index.core.storage.kvstore import SimpleKVStore
+
+from .config import Settings
+from .embeddings import GeminiPolicyEmbedding
 
 
 def service_rule(day: date, hour: int) -> dict:
@@ -33,9 +45,16 @@ def counter_rule(day: date, hour: int, terminal: str) -> dict:
     return {'minimum': minimum, 'source': source}
 
 
+class PolicyRetrievalError(RuntimeError):
+    pass
+
+
 class PolicyStore:
-    def __init__(self, folder: Path):
+    def __init__(self, folder: Path, *, embed_model: BaseEmbedding, index_path: Path | None = None):
         self.clauses = []
+        self.embed_model = embed_model
+        self._index = None
+        self._index_lock = Lock()
         register = folder / 'Document_Register.csv'
         with register.open(encoding='utf-8-sig', newline='') as stream:
             for row in csv.DictReader(stream):
@@ -54,12 +73,80 @@ class PolicyStore:
                             'version': row['version'], 'text': match[2],
                         })
 
-    def search(self, query: str, date_from: date, date_to: date) -> list[dict]:
-        words = set(re.findall(r'\w+', query.lower()))
-        # Always include the rules needed to interpret historical queue analysis.
-        essential = {'GIA-POL-01', 'GIA-STD-03', 'GIA-SOP-06', 'GIA-MAN-08'}
-        candidates = []
+        self.nodes = []
+        self._clauses_by_id = {}
         for clause in self.clauses:
+            if clause['document'] == 'GIA-DRAFT-11' or clause['status'].upper() == 'DRAFT':
+                continue
+            node_id = hashlib.sha256(json.dumps(clause, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+            self.nodes.append(TextNode(
+                id_=node_id, text=f"{clause['document']} section {clause['section']}: {clause['text']}",
+                metadata=clause,
+            ))
+            self._clauses_by_id[node_id] = clause
+        # A document, metadata or embedding-model change selects a new cache.
+        fingerprint = hashlib.sha256(json.dumps({
+            'schema': 1, 'model': embed_model.model_name, 'adapter': type(embed_model).__name__,
+            'clauses': list(self._clauses_by_id.values()),
+        }, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+        self.index_path = index_path / fingerprint if index_path else None
+
+    @classmethod
+    def from_settings(cls, settings: Settings):
+        return cls(settings.documents, embed_model=GeminiPolicyEmbedding(settings.api_key, settings.embedding_model),
+                   index_path=settings.policy_index)
+
+    def _ensure_index(self):
+        with self._index_lock:
+            if self._index is not None:
+                return self._index
+            if self.index_path and (self.index_path / '.complete').is_file():
+                try:
+                    self._index = load_index_from_storage(
+                        StorageContext.from_defaults(persist_dir=str(self.index_path)), embed_model=self.embed_model,
+                    )
+                    return self._index
+                except (OSError, ValueError, KeyError):
+                    # Interrupted/corrupt caches are rebuilt from the registered sources.
+                    pass
+            cache_path = self.index_path / 'embeddings.json' if self.index_path else None
+            cache = SimpleKVStore()
+            if cache_path and cache_path.is_file():
+                try:
+                    cache = SimpleKVStore.from_persist_path(str(cache_path))
+                except (OSError, ValueError):
+                    pass
+            pending = []
+            for node in self.nodes:
+                cached = cache.get(node.node_id, collection='policy_embeddings')
+                if cached:
+                    node.embedding = cached['vector']
+                elif node.embedding is None:
+                    pending.append(node)
+            # Save each successful batch so a provider rate limit never discards index progress.
+            for start in range(0, len(pending), self.embed_model.embed_batch_size):
+                batch = pending[start:start + self.embed_model.embed_batch_size]
+                vectors = self.embed_model.get_text_embedding_batch([
+                    node.get_content(metadata_mode=MetadataMode.EMBED) for node in batch
+                ])
+                for node, vector in zip(batch, vectors, strict=True):
+                    node.embedding = vector
+                    cache.put(node.node_id, {'vector': vector}, collection='policy_embeddings')
+                if cache_path:
+                    cache.persist(str(cache_path))
+            index = VectorStoreIndex(self.nodes, embed_model=self.embed_model, show_progress=False)
+            if self.index_path:
+                self.index_path.mkdir(parents=True, exist_ok=True)
+                index.storage_context.persist(persist_dir=str(self.index_path))
+                (self.index_path / '.complete').touch()
+            self._index = index
+            return index
+
+    def search(self, query: str, date_from: date, date_to: date) -> list[dict]:
+        if not query.strip():
+            return []
+        candidates = []
+        for node_id, clause in self._clauses_by_id.items():
             doc = clause['document']
             if doc == 'GIA-DRAFT-11':
                 continue
@@ -69,17 +156,24 @@ class PolicyStore:
                 continue
             if doc == 'GIA-SOP-06' and date_to < date(2026, 3, 1):
                 continue
-            score = len(words & set(re.findall(r'\w+', clause['text'].lower())))
-            if doc in essential or doc == 'GIA-SUP-12':
-                score += 2
-            candidates.append((score, clause))
-        ranked = sorted(candidates, key=lambda item: item[0], reverse=True)
-        selected = [item[1] for item in ranked[:14]]
+            candidates.append(node_id)
+        if not candidates:
+            return []
+        try:
+            # Restrict the vector search BEFORE top-k so invalid policies cannot crowd out valid ones.
+            retrieved = VectorIndexRetriever(
+                index=self._ensure_index(), similarity_top_k=min(14, len(candidates)), node_ids=candidates,
+            ).retrieve(query)
+        except Exception as exc:
+            raise PolicyRetrievalError('Policy vector retrieval is unavailable') from exc
+        eligible = set(candidates)
+        selected = [self._clauses_by_id[item.node.node_id] for item in retrieved if item.node.node_id in eligible]
         # Preserve date/exception/measurement context even for Arabic queries.
         required = {('GIA-POL-01', '2.3'), ('GIA-POL-01', '4.2'), ('GIA-STD-03', '5.2'), ('GIA-STD-03', '5.3')}
         if date_from < date(2026, 1, 1):
             required |= {('GIA-SUP-12', '1.1'), ('GIA-SUP-12', '2.3')}
-        for _, clause in candidates:
+        for node_id in candidates:
+            clause = self._clauses_by_id[node_id]
             if (clause['document'], clause['section']) in required and clause not in selected:
                 selected.append(clause)
         return selected

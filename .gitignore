@@ -10,4 +10,5 @@ __pycache__/
 !.env.example
 logs/
 backend/data/chat/
+backend/data/policy_index/
 *.log

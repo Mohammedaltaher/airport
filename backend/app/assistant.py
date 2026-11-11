@@ -123,7 +123,7 @@ class Assistant:
         filters = request.filters
         # Supply baseline evidence even if the model elects not to call tools.
         dashboard = await asyncio.to_thread(self.analytics.dashboard, filters)
-        clauses = self.policies.search(request.question, filters.date_from, filters.date_to)
+        clauses = await asyncio.to_thread(self.policies.search, request.question, filters.date_from, filters.date_to)
         record(self.settings.logs, 'policy_search', {'query': request.question, 'filters': filters.model_dump(mode='json')}, clauses)
         baseline = {'filters': dashboard['filters'], 'metrics': dashboard['metrics'], 'exclusions': dashboard['exclusions'], 'policy_clauses': clauses}
         # Bound provider context to the last six exchanges; the full transcript remains saved.
@@ -154,7 +154,7 @@ class Assistant:
                     result = {'error': 'Only four tool calls per round are allowed. No operation performed.'}
                 elif call.name == 'policy_search':
                     query = str((call.args or {}).get('query', request.question))[:1000]
-                    found = self.policies.search(query, filters.date_from, filters.date_to)
+                    found = await asyncio.to_thread(self.policies.search, query, filters.date_from, filters.date_to)
                     for clause in found:
                         if clause not in clauses:
                             clauses.append(clause)
