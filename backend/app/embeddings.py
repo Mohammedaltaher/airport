@@ -6,12 +6,14 @@ from google.genai import types
 from llama_index.core.base.embeddings.base import BaseEmbedding
 from pydantic import PrivateAttr
 
+from .config import DEFAULT_EMBED_BATCH_SIZE
+
 
 class GeminiPolicyEmbedding(BaseEmbedding):
     _api_key: str = PrivateAttr()
 
-    def __init__(self, api_key: str, model_name: str = 'gemini-embedding-001'):
-        super().__init__(model_name=model_name, embed_batch_size=16)
+    def __init__(self, api_key: str, model_name: str = 'gemini-embedding-001', embed_batch_size: int = DEFAULT_EMBED_BATCH_SIZE):
+        super().__init__(model_name=model_name, embed_batch_size=embed_batch_size)
         self._api_key = api_key
 
     def _embed(self, texts: list[str], task: str) -> list[list[float]]:

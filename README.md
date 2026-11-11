@@ -65,6 +65,10 @@ source paths are resolved against `dma/`, independent of the working directory.
 | `DMA_DOCUMENTS_PATH` | Defaults to `backend/data/documents`. Requires the document register and TXT files. |
 | `DMA_POLICY_INDEX_PATH` | Local LlamaIndex vector index cache; defaults to `backend/data/policy_index`. |
 | `GEMINI_EMBEDDING_MODEL` | Retrieval embedding model; defaults to `gemini-embedding-001`, using the existing Gemini API key. Requires retrieval-document/query task support. |
+| `DMA_CHUNK_SIZE` | Maximum policy text tokens per chunk, default `512`. Chunks stay within a numbered clause. |
+| `DMA_CHUNK_OVERLAP` | Target token overlap within a split clause, default `64`; must be nonnegative and smaller than chunk size. |
+| `DMA_SIMILARITY_TOP_K` | Number of chunks retrieved before mandatory rules are added, default `14`. |
+| `DMA_EMBED_BATCH_SIZE` | Chunks embedded per batch, default `16`; use a smaller value for tight provider quotas. |
 | `GEMINI_API_KEY` | Server-side Gemini credential. Never sent to the browser. |
 | `GEMINI_MODEL` | An available model ID from your Gemini account; no guessed default. |
 | `DMA_ALLOWED_ORIGINS` | Comma-separated development origins, localhost and 127.0.0.1 on port 4321 by default. |
@@ -133,13 +137,14 @@ English and Arabic questions are supported; policy sources are in English.
 Policy RAG uses LlamaIndex `TextNode` clause chunks and `VectorStoreIndex` semantic
 retrieval, with Gemini embeddings through a `BaseEmbedding` adapter for the existing
 Google SDK. No OpenAI key or external vector database is required. Drafts are not
-indexed; date-eligible node IDs restrict vector search before the top 14 results
-are selected. Required measurement and exception clauses are then appended.
+indexed; date-eligible node IDs restrict vector search before the configured top-k
+results are selected. A `SentenceSplitter` splits long clauses using the configured
+chunk size and overlap. Required measurement and exception clauses retain their full text.
 The policy tool answers from retrieved clauses under its own prompt and cites
 the document and section. Analytics rules remain explicit Python functions.
 
 The index builds on the first policy question and persists locally. Cache keys
-include the policy content, metadata and embedding model; changing those creates
+include the policy content, metadata, embedding model and chunk settings; changing those creates
 a fresh index on the next backend restart. Keep the cache directory writable. The first request can take
 longer while documents are embedded, and Gemini embedding access/quota is required.
 Successful embedding batches are cached immediately. If an embedding rate limit
