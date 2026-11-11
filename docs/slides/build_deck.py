@@ -98,27 +98,27 @@ def build():
     rect(slide, 0, 0, 0.16, H, TEAL)
     textbox(slide, 0.85, 2.15, 11, 0.3, 'TEAM DMA', 14, TEAL, True)
     textbox(slide, 0.85, 2.55, 11, 1.4, 'Airport queue and staffing', 44, WHITE, True)
-    textbox(slide, 0.85, 4.15, 9.5, 0.9, 'Historical evidence, and the policy that applied, in one place.', 22, RGBColor(0xC5, 0xD7, 0xE2))
+    textbox(slide, 0.85, 4.15, 9.5, 0.9, 'See the waits, the staffing, and the rule that applied.', 22, RGBColor(0xC5, 0xD7, 0xE2))
     textbox(slide, 0.85, 6.7, 10, 0.3, 'Fictional training data  ·  Historical analysis', 14, RGBColor(0x8E, 0xA8, 0xB8))
 
     slide = deck.slides.add_slide(blank)
-    content_chrome(slide, 'THE PROBLEM', 'The records do not answer the question')
-    textbox(slide, 0.55, 1.3, 12, 0.8, 'A manager cannot tell, from the raw records, whether a queue or the counters open that hour broke the rule in force that day.', 18, INK)
+    content_chrome(slide, 'THE PROBLEM', 'The files do not say if we passed')
+    textbox(slide, 0.55, 1.3, 12, 0.8, 'A manager cannot tell, from the raw files alone, whether that hour broke the rule.', 18, INK)
     bullets(slide, 0.55, 2.25, 12, 4.4, [
-        'On 1 January 2026 the waiting-time target changed: 20 minutes and a 10% tail, then 15 minutes and 5%.',
-        'Counter minimums are a separate rule. Terminal 1 Fridays allowed five counters until 30 June 2026, then nine.',
-        'Passenger journeys are a 4% sample. A missing roster hour is unknown, not zero.',
-        'An incident that overlaps a queue does not prove the cause.',
+        'The wait limit changed on 1 January 2026. It was 20 minutes, then 15.',
+        'Friday at Terminal 1 needed 5 open counters until 30 June 2026, then 9.',
+        'We counted a sample of passengers, not every traveler. A blank roster hour means we do not know the staffing.',
+        'An incident at the same time is not proof that it caused the queue.',
     ])
 
     slide = deck.slides.add_slide(blank)
-    content_chrome(slide, 'THE APPROACH', 'Judge the period with the rule that applied')
+    content_chrome(slide, 'THE APPROACH', 'What the app does')
     bullets(slide, 0.55, 1.45, 12, 5.2, [
-        '1    Choose the terminal and the period.',
-        '2    Apply the date-correct rule in code, not inside a model prompt.',
-        '3    Show the averages, where the queue builds, and each monthly finding with its policy reference.',
-        '4    Ask in English or Arabic. Show the clauses, and save the conversation for follow-up.',
-        '5    Leave the roster unchanged. A manager still decides.',
+        '1    You choose the terminal and the dates.',
+        '2    The app looks up the rule that applied on that date.',
+        '3    It shows the waits, the busy hours, and which hours failed.',
+        '4    You can ask in English or Arabic, and see the policy line it used.',
+        '5    It does not change the roster. A manager decides.',
     ], size=20)
 
     shots = [
