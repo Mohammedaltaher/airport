@@ -54,7 +54,7 @@ def settings(tmp_path):
         ])
         # Begins before the selected day and spans midnight.
         con.execute("INSERT INTO incidents VALUES ('I-1','2026-09-03',23,1140,'ALL','IT outage','High')")
-    return Settings(database=database, documents=PROJECT.parent / 'data/documents', api_key='', model='', logs=tmp_path / 'logs')
+    return Settings(database=database, documents=PROJECT / 'backend/data/documents', api_key='', model='', logs=tmp_path / 'logs')
 
 
 @pytest.mark.parametrize('day,average,tail,peak', [

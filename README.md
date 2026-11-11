@@ -60,15 +60,14 @@ source paths are resolved against `dma/`, independent of the working directory.
 
 | Setting | Purpose |
 |---|---|
-| `DMA_DATABASE_PATH` | Defaults to `../data/database/airport_ops/airport_ops.db`. |
-| `DMA_DOCUMENTS_PATH` | Defaults to `../data/documents`. Requires the document register and TXT files. |
+| `DMA_DATABASE_PATH` | Defaults to `backend/data/database/airport_ops.db`. |
+| `DMA_DOCUMENTS_PATH` | Defaults to `backend/data/documents`. Requires the document register and TXT files. |
 | `GEMINI_API_KEY` | Server-side Gemini credential. Never sent to the browser. |
 | `GEMINI_MODEL` | An available model ID from your Gemini account; no guessed default. |
 | `DMA_ALLOWED_ORIGINS` | Comma-separated development origins, localhost and 127.0.0.1 on port 4321 by default. |
 
-If the nested database is absent, restore it with the repository's
-`data/database/restore_database.py` script and set `DMA_DATABASE_PATH` to
-`../data/database/airport_ops.db`.
+Place the supplied database at `backend/data/database/airport_ops.db` and the
+policy documents in `backend/data/documents/`.
 
 The dashboard works without Gemini. Assistant submission remains disabled until
 both Gemini settings are present. Restart FastAPI after editing configuration.
