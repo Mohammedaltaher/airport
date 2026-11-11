@@ -211,11 +211,11 @@ class Analytics:
                 if not (f.date_from <= day <= f.date_to and f.hour_from <= hour <= f.hour_to and (f.weekday == 'All' or day.strftime('%A') == f.weekday)):
                     continue
                 if run >= 3:
-                    source = 'GIA-SUP-12 §3.3 (historical)' if limit == 40 else 'GIA-POL-01 §3.3'
+                    source = 'GIA-SUP-12 section 3.3 (historical)' if limit == 40 else 'GIA-POL-01 section 3.3'
                     events.append({'terminal': terminal, 'date': str(day), 'hour': hour, 'level': 'Level 2 / staff request', 'policy': source, 'detail': f'Hourly sampled averages >{limit} min for at least 3 consecutive hours.'})
                 if day >= date(2026, 3, 1):
                     if row.mean > 20:
-                        events.append({'terminal': terminal, 'date': str(day), 'hour': hour, 'level': 'Level 1', 'policy': 'GIA-SOP-06 §2.1', 'detail': 'Hourly sampled average >20 min.'})
+                        events.append({'terminal': terminal, 'date': str(day), 'hour': hour, 'level': 'Level 1', 'policy': 'GIA-SOP-06 section 2.1', 'detail': 'Hourly sampled average >20 min.'})
                     if row.max > 45:
-                        events.append({'terminal': terminal, 'date': str(day), 'hour': hour, 'level': 'Level 3', 'policy': 'GIA-SOP-06 §2.3', 'detail': 'At least one sampled individual wait >45 min; flight eligibility and response require verification.'})
+                        events.append({'terminal': terminal, 'date': str(day), 'hour': hour, 'level': 'Level 3', 'policy': 'GIA-SOP-06 section 2.3', 'detail': 'At least one sampled individual wait >45 min; flight eligibility and response require verification.'})
         return events

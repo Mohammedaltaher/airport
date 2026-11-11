@@ -1,0 +1,29 @@
+GIA-POL-10 RESPONSIBLE USE OF AI AND DATA POLICY (version 1.0, APPROVED)
+General International Airport (fictional) - Document GIA-POL-10, Version 1.0
+Status: APPROVED | Effective: 1 September 2026 | Next review: 1 September 2027
+Owner: Chief Information Officer | Approved by: Executive Committee (decision EC-2026-017, 25 August 2026)
+Supersedes: None (first issue) | Classification: Internal
+This is a fictional document created for training purposes.
+
+Section 1. Purpose and scope
+1.1 This policy sets the rules for using AI assistants and AI agents with airport data and documents.
+1.2 It applies to all employees and contractors.
+
+Section 2. Data classification
+2.1 Public data may be used with any approved AI service.
+2.2 Internal data, such as operational statistics and policy documents, may be used only with AI services approved by the Chief Information Officer, under paid terms that do not allow the provider to use the content to improve its own products.
+2.3 Personal data, such as names, passport numbers and contact details, must never be sent to an external AI model.
+2.4 Training, demonstrations and pilots use synthetic or fictional data only.
+
+Section 3. AI agents and tools
+3.1 An AI agent may read operational data only through read-only database access. Agents must not change, delete or create data.
+3.2 Every tool call made by an agent must be logged with the query or request and the result.
+3.3 Agents answer rules and policy questions only from approved documents and must cite the document and section. Draft and superseded documents must be identified as such.
+3.4 Numbers in an agent answer must come from a database query, not from the model's memory.
+
+Section 4. Human accountability
+4.1 A named employee is accountable for every decision informed by an AI answer. The answer is advice, not a decision.
+4.2 Answers used in a report must be checked against the source query before publication.
+
+Section 5. Language and fairness
+5.1 AI services must work in English and Arabic, and comments in both languages are given the same weight.

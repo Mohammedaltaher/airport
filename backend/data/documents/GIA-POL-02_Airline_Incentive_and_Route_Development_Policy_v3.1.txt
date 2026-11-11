@@ -1,0 +1,32 @@
+GIA-POL-02 AIRLINE INCENTIVE AND ROUTE DEVELOPMENT POLICY (version 3.1, APPROVED)
+General International Airport (fictional) - Document GIA-POL-02, Version 3.1
+Status: APPROVED | Effective: 1 July 2025 | Next review: 1 July 2027
+Owner: Director, Commercial | Approved by: Commercial Committee (decision CC-2025-014, 20 June 2025)
+Supersedes: Airline Incentive Policy v3.0 | Classification: Internal
+This is a fictional document created for training purposes.
+
+Section 1. Objective
+1.1 The airport grows passenger numbers by supporting airlines that add destinations or add frequency on routes where demand already exceeds capacity.
+1.2 The policy also protects service quality: incentives depend on punctuality.
+
+Section 2. Priority growth routes
+2.1 A route is a priority growth route when its average load factor is 90 percent or higher over a rolling 3 months and it has fewer than 7 weekly departures.
+2.2 Load factor is calculated across all operated flights on the route, both directions, excluding cancelled flights.
+2.3 The Commercial team publishes the list of priority growth routes every quarter.
+
+Section 3. Incentives
+3.1 Added frequency on a priority growth route: 50 percent discount on landing charges for the added flights, for 12 months.
+3.2 A new destination not served before: 75 percent discount on landing charges in year one, 50 percent in year two and 25 percent in year three.
+3.3 Marketing support of up to AED 150,000 is available for a new destination, matched by the airline.
+3.4 Standard rebate scheme: every airline that is a scheme member receives a rebate of 5 percent of its monthly landing charges.
+
+Section 4. Conditions
+4.1 To receive or keep any incentive, including the standard rebate, the airline must have no more than 30 percent of its flights delayed in a month, where delayed means more than 15 minutes late.
+4.2 An airline that exceeds this limit loses all incentives for the following month. For 3 consecutive months of breach the incentive agreement is suspended.
+4.3 Before releasing each monthly rebate, Finance must check the punctuality report published under the Delay Management SOP (GIA-SOP-04).
+4.4 Incentives are reviewed annually by the Commercial Committee.
+
+Section 5. Process
+5.1 An airline applies for an incentive in writing to the Commercial team, with the proposed schedule and aircraft type.
+5.2 The Commercial Committee decides within 30 days of a complete application.
+5.3 Finance maintains the airline incentive ledger and reports withheld and paid amounts each quarter.

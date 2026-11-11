@@ -219,9 +219,37 @@ document.querySelectorAll<HTMLButtonElement>('[data-kind]').forEach(button => bu
   renderFindings();
 }));
 document.querySelectorAll<HTMLButtonElement>('[data-question]').forEach(button => button.addEventListener('click', () => { el<HTMLTextAreaElement>('question').value = button.dataset.question ?? ''; el('question').focus(); }));
-el('menu-toggle').addEventListener('click', () => { const opened = el('sidebar').classList.toggle('open'); el('menu-toggle').setAttribute('aria-expanded', String(opened)); });
-document.querySelectorAll('.nav-item').forEach(link => link.addEventListener('click', () => { el('sidebar').classList.remove('open'); el('menu-toggle').setAttribute('aria-expanded', 'false'); }));
-document.addEventListener('keydown', event => { if (event.key === 'Escape') { el('sidebar').classList.remove('open'); el('menu-toggle').setAttribute('aria-expanded', 'false'); } });
+document.querySelectorAll<HTMLAnchorElement>('.nav-links a').forEach(link => link.addEventListener('click', () => {
+  document.querySelectorAll('.nav-links a').forEach(item => item.removeAttribute('aria-current'));
+  link.setAttribute('aria-current', 'page');
+}));
+
+let chatTrigger: HTMLElement | null = null;
+function setChatOpen(open: boolean) {
+  const panel = el('assistant');
+  panel.hidden = !open;
+  document.body.classList.toggle('chat-open', open);
+  ['chat-fab', 'ask-dma'].forEach(id => el(id).setAttribute('aria-expanded', String(open)));
+  el('chat-fab').setAttribute('aria-label', open ? 'Close DMA assistant' : 'Ask DMA');
+  if (open) el<HTMLTextAreaElement>('question').focus();
+  else {
+    const restore = chatTrigger;
+    chatTrigger = null;
+    restore?.focus();
+  }
+}
+function openChat(trigger: HTMLElement) {
+  chatTrigger = trigger;
+  setChatOpen(true);
+}
+el('chat-fab').addEventListener('click', () => {
+  const opening = el('assistant').hidden;
+  if (opening) openChat(el('chat-fab'));
+  else setChatOpen(false);
+});
+el('ask-dma').addEventListener('click', () => openChat(el('ask-dma')));
+el('chat-close').addEventListener('click', () => setChatOpen(false));
+document.addEventListener('keydown', event => { if (event.key === 'Escape' && !el('assistant').hidden) setChatOpen(false); });
 el<HTMLFormElement>('ask-form').addEventListener('submit', async event => {
   event.preventDefault();
   if (!applied || !geminiConfigured || asking) return;
@@ -239,7 +267,7 @@ el<HTMLFormElement>('ask-form').addEventListener('submit', async event => {
     if (answer.citations.length) {
       const details = document.createElement('details'); details.className = 'chat-citations';
       const summary = document.createElement('summary'); summary.textContent = `Review ${answer.citations.length} retrieved source clauses`; details.append(summary);
-      answer.citations.forEach(clause => { const paragraph = document.createElement('p'); paragraph.textContent = `${clause.document} §${clause.section} · v${clause.version} · ${clause.status} · effective ${clause.effective}\n${clause.text}`; paragraph.dir = 'auto'; details.append(paragraph); });
+      answer.citations.forEach(clause => { const paragraph = document.createElement('p'); paragraph.textContent = `${clause.document} section ${clause.section}, v${clause.version}, ${clause.status}, effective ${clause.effective}\n${clause.text}`; paragraph.dir = 'auto'; details.append(paragraph); });
       el('conversation').append(details);
     }
   } catch (err) {

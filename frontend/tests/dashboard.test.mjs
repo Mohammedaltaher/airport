@@ -79,6 +79,31 @@ test('empty selections and backend failures have visible states', async () => {
   context.dom.window.close();
 });
 
+test('assistant panel starts closed and toggles from Ask DMA, the button, and Escape', async () => {
+  const { dom, window, doc } = await setup();
+  try {
+    const panel = doc.getElementById('assistant');
+    const ask = doc.getElementById('ask-dma');
+    const fab = doc.getElementById('chat-fab');
+    assert.equal(panel.hidden, true);
+    assert.equal(ask.getAttribute('aria-expanded'), 'false');
+    assert.equal(fab.getAttribute('aria-expanded'), 'false');
+    ask.click();
+    assert.equal(panel.hidden, false);
+    assert.equal(ask.getAttribute('aria-expanded'), 'true');
+    assert.equal(fab.getAttribute('aria-expanded'), 'true');
+    assert.equal(doc.activeElement, doc.getElementById('question'));
+    doc.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape' }));
+    assert.equal(panel.hidden, true);
+    assert.equal(doc.body.classList.contains('chat-open'), false);
+    fab.click();
+    assert.equal(panel.hidden, false);
+    fab.click();
+    assert.equal(panel.hidden, true);
+    assert.equal(fab.getAttribute('aria-label'), 'Ask DMA');
+  } finally { dom.window.close(); }
+});
+
 test('assistant shows provider failure and renders model text without HTML execution', async () => {
   for (const failure of [true, false]) {
     const { dom, window, calls, doc } = await setup({ configured: true, failAssistant: failure });

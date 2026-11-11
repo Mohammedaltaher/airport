@@ -1,0 +1,34 @@
+GIA-MAN-08 KPI AND DATA DEFINITIONS MANUAL (version 1.1, APPROVED)
+General International Airport (fictional) - Document GIA-MAN-08, Version 1.1
+Status: APPROVED | Effective: 1 January 2026 | Next review: 1 January 2027
+Owner: Head of Performance and Data | Approved by: Executive Committee (decision EC-2025-043, 9 December 2025)
+Supersedes: KPI Definitions v1.0 | Classification: Internal
+This is a fictional document created for training purposes.
+
+Section 1. Purpose
+1.1 This manual defines every indicator used in airport reports, so that one number always means one thing.
+
+Section 2. Traffic indicators
+2.1 Load factor is passengers carried divided by seats offered on a flight. Route load factor is the average over operated flights, excluding cancelled flights.
+2.2 A flight is on time when it is no more than 15 minutes late, delayed when it is more than 15 minutes late, and cancelled when it does not operate. Delayed percentage is delayed flights divided by operated flights.
+2.3 Weekly departures of a route are the number of departing flights per week on that route, all airlines together.
+
+Section 3. Passenger journey indicators
+3.1 The passenger timing sample holds 4 percent of passengers. Counts are multiplied by 25 to estimate the full population.
+3.2 Immigration wait is the minutes from joining the queue to being processed. Total processing time is check-in plus security plus immigration for departures, and immigration plus baggage for arrivals.
+3.3 Time-of-day analysis uses the hour the passenger was at immigration, not the scheduled flight hour. A departing passenger reaches immigration about two to three hours before the flight.
+3.4 Spend per passenger is the average spend in shops, food and beverage across all sampled passengers in the group, including passengers who bought nothing.
+3.5 Missed-flight rate is departing passengers who missed their flight divided by departing passengers in the same group.
+
+Section 4. Financial indicators
+4.1 Non-aeronautical revenue per passenger is duty free, food and beverage, other retail, parking, car rental and advertising revenue divided by passengers.
+4.2 Revenue at risk from a queue is the spend per departing passenger in normal hours minus the spend per departing passenger in the affected hours, multiplied by the estimated number of affected departing passengers. This is an upper bound because it assumes the whole gap is caused by the queue.
+4.3 All money is reported in UAE dirhams (AED).
+
+Section 5. Data quality rules
+5.1 Roster data is missing for hours in which the roster system was down. Those hours are excluded from counter-based analysis and the exclusion is stated.
+5.2 Feedback duplicates are removed under GIA-GDL-07 before reporting.
+5.3 Every report states its period, its sample basis and any exclusions.
+
+Section 6. Reporting calendar
+6.1 Operational indicators are reported monthly by the 10th of the following month. Financial indicators are reported by the 15th.

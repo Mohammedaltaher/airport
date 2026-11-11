@@ -1,0 +1,26 @@
+GIA-SOP-04 DELAY MANAGEMENT STANDARD OPERATING PROCEDURE (version 2.2, APPROVED)
+General International Airport (fictional) - Document GIA-SOP-04, Version 2.2
+Status: APPROVED | Effective: 1 January 2025 | Next review: 1 January 2027
+Owner: Director, Airport Operations | Approved by: Operations Board (decision OB-2024-041, 12 December 2024)
+Supersedes: Delay Management SOP v2.1 | Classification: Internal
+This is a fictional document created for training purposes.
+
+Section 1. Definitions
+1.1 A flight is delayed when it departs or arrives more than 15 minutes after its scheduled time.
+1.2 Every delay longer than 15 minutes must be assigned one reason code: late inbound aircraft, technical, crew, ground handling or weather.
+1.3 Cancelled flights are reported separately and are not counted as delayed.
+
+Section 2. Airline performance monitoring
+2.1 Operations publishes a punctuality report for every airline each month, showing the percentage of delayed flights.
+2.2 An airline with more than 30 percent of flights delayed in a month receives a formal warning from the Airline Relations team.
+2.3 An airline above the 30 percent limit for 3 consecutive months is placed under performance review, its incentives are suspended under the Airline Incentive Policy (GIA-POL-02), and its slot allocation may be reviewed.
+2.4 Delays coded as ground handling that are caused by the airport count against the airport's own performance indicators, not the airline's.
+
+Section 3. Passenger care during delays
+3.1 Delay longer than 60 minutes: the airline must provide clear information at the gate and on the information screens.
+3.2 Delay longer than 120 minutes: meal vouchers must be offered to every affected passenger.
+3.3 Delay longer than 240 minutes: hotel accommodation must be offered to passengers who cannot continue their journey the same day.
+
+Section 4. Root cause follow-up
+4.1 When one airline accounts for the majority of technical or late-inbound delays over 2 consecutive months, Operations must meet the airline and agree a recovery plan within 14 days.
+4.2 Recovery plans are reviewed monthly until the airline is below the 30 percent limit for 3 consecutive months.

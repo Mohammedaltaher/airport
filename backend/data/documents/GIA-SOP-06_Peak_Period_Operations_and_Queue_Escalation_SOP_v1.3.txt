@@ -1,0 +1,27 @@
+GIA-SOP-06 PEAK-PERIOD OPERATIONS AND QUEUE ESCALATION SOP (version 1.3, APPROVED)
+General International Airport (fictional) - Document GIA-SOP-06, Version 1.3
+Status: APPROVED | Effective: 1 March 2026 | Next review: 1 March 2027
+Owner: Director, Airport Operations | Approved by: Operations Board (decision OB-2026-004, 16 February 2026)
+Supersedes: Queue Escalation SOP v1.2 | Classification: Internal
+This is a fictional document created for training purposes.
+
+Section 1. Purpose
+1.1 This procedure tells the duty manager what to do when queues build up, so that no passenger waits longer than the service standards allow.
+
+Section 2. Escalation levels
+2.1 Level 1: the average departure immigration wait in the last hour is above 20 minutes. The duty manager opens any reserve counters in that terminal and informs the border supervisor.
+2.2 Level 2: the average departure immigration wait is above 30 minutes for 3 consecutive hours. The duty manager requests additional border staff immediately, records the incident, and notifies the Director, Airport Operations.
+2.3 Level 3: individual waits above 45 minutes. The duty manager activates priority lanes for passengers whose flight departs within 90 minutes, informs the airlines, and logs every passenger who misses a flight for rebooking assistance under GIA-SOP-05.
+
+Section 3. Reserve capacity
+3.1 Terminal 1 has 14 departure immigration counters installed and Terminal 2 has 9. Counters installed but not rostered are reserve capacity.
+3.2 Reserve capacity may be opened within 15 minutes of a Level 1 trigger if border staff are available.
+
+Section 4. Smart gates
+4.1 Automated smart gates operate at Terminal 1 departures from 1 July 2026. Use is voluntary and open to eligible resident and work permit holders.
+4.2 Smart gates reduce load on staffed counters but do not replace the minimum counters in GIA-STD-03.
+4.3 A smart gate outage longer than 30 minutes is recorded as an incident and the duty manager reviews the staffed counters.
+
+Section 5. Monitoring and reporting
+5.1 The control room reviews the sampled waiting times every hour in peak hours.
+5.2 Each Level 2 or Level 3 event is reported to the Customer Experience Committee in the monthly compliance report.

@@ -11,12 +11,12 @@ def service_rule(day: date, hour: int) -> dict:
         'average_limit': 15 if current else 20,
         'tail_limit': 5 if current else 10,
         'peak': (17 if current else 18) <= hour <= 22,
-        'source': 'GIA-POL-01 §§2.3, 3.1, 4.2' if current else 'GIA-SUP-12 §§1–3 (historically applicable v2.0)',
+        'source': 'GIA-POL-01 sections 2.3, 3.1, 4.2' if current else 'GIA-SUP-12 sections 1–3 (historically applicable v2.0)',
     }
 
 
 def counter_rule(day: date, hour: int, terminal: str) -> dict:
-    source = 'GIA-STD-03 §§2–3'
+    source = 'GIA-STD-03 sections 2–3'
     if hour < 5:
         minimum = 4 if terminal == 'T1' else 2
     elif hour < 7:
@@ -27,7 +27,7 @@ def counter_rule(day: date, hour: int, terminal: str) -> dict:
         minimum = 9
         if day.weekday() == 4 and date(2025, 10, 1) <= day <= date(2026, 6, 30):
             minimum = 5
-            source = 'GIA-STD-03 §5.2 (EX-2025-07, expires 30 June 2026)'
+            source = 'GIA-STD-03 section 5.2 (EX-2025-07, expires 30 June 2026)'
     else:
         minimum = 8
     return {'minimum': minimum, 'source': source}

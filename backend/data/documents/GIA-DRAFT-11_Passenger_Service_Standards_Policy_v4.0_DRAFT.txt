@@ -1,0 +1,31 @@
+GIA-DRAFT-11 PASSENGER SERVICE STANDARDS POLICY - DRAFT FOR CONSULTATION (version 4.0 (draft 0.4), DRAFT - NOT APPROVED, NOT IN FORCE)
+General International Airport (fictional) - Document GIA-DRAFT-11, Version 4.0 (draft 0.4)
+Status: DRAFT - NOT APPROVED, NOT IN FORCE | Effective: Proposed 1 January 2027, only if approved | Next review: Not applicable until approved
+Owner: Director, Passenger Experience | Approved by: Not yet approved. Planned for Executive Committee, December 2026
+Supersedes: Would supersede GIA-POL-01 v3.0 if approved | Classification: Internal - consultation draft
+This is a fictional document created for training purposes.
+
+Section 1. Status of this draft
+1.1 This document is a consultation draft. It is NOT approved and has NO effect. The rules in force are in GIA-POL-01 v3.0.
+1.2 Comments are due by 30 November 2026 to the Director, Passenger Experience.
+1.3 Every number in this draft is a proposal and may change.
+
+Section 2. Proposed changes to processing time targets
+2.1 Proposed: departure immigration average wait not to exceed 12 minutes (currently 15), and no more than 3 percent of departing passengers waiting longer than 30 minutes in any peak hour (currently 5 percent).
+2.2 Proposed: check-in and security averages not to exceed 8 minutes (currently 10).
+2.3 Proposed: arrival immigration average not to exceed 12 minutes (currently 15).
+
+Section 3. Proposed changes to peak hours and counters
+3.1 Proposed: on Fridays, peak hours start at 16:00 instead of 17:00.
+3.2 Proposed: minimum departure immigration counters in peak hours become 10 in Terminal 1 (currently 9) and 6 in Terminal 2 (currently 5).
+3.3 Proposed: no exception to a staffing minimum may last longer than 90 days.
+3.4 Proposed: smart gate users are reported separately from staffed counter users.
+
+Section 4. Proposed changes to satisfaction and missed flights
+4.1 Proposed: average satisfaction of at least 4.2 in every category (currently 4.0).
+4.2 Proposed: an executive review is triggered when more than 0.5 percent of departing passengers miss their flight in any peak hour band (currently 1 percent).
+4.3 Proposed pilot: a goodwill voucher of up to AED 150 for passengers who miss a flight because of an airport queue longer than 45 minutes. This would change section 4.1 of GIA-SOP-05, which today excludes cash compensation.
+
+Section 5. Consultation and timetable
+5.1 Consultation closes on 30 November 2026. The revised draft goes to the Executive Committee in December 2026.
+5.2 If approved, the policy takes effect on 1 January 2027. Until then GIA-POL-01 v3.0 applies.

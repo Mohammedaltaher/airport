@@ -1,0 +1,37 @@
+GIA-STD-03 COUNTER STAFFING AND ROSTER STANDARD (version 2.0, APPROVED)
+General International Airport (fictional) - Document GIA-STD-03, Version 2.0
+Status: APPROVED | Effective: 1 October 2025 | Next review: 1 October 2026
+Owner: Director, Airport Operations | Approved by: Operations Board (decision OB-2025-027, 22 September 2025)
+Supersedes: Counter Staffing Standard v1.4 | Classification: Internal
+This is a fictional document created for training purposes.
+
+Section 1. Purpose
+1.1 This standard sets how many counters, desks and lanes must be staffed at each checkpoint, and how rosters are built and changed.
+1.2 It supports the service targets in the Passenger Service Standards Policy (GIA-POL-01).
+
+Section 2. Roster templates and minimum counters
+2.1 Three roster templates are used. Standard applies Monday to Thursday, Friday-B applies on Fridays, Weekend applies on Saturday and Sunday.
+2.2 Departure immigration, Terminal 1: minimum 8 counters off-peak and 9 counters in peak hours (17:00 to 22:59). 14 counters are installed.
+2.3 Departure immigration, Terminal 2: minimum 5 counters off-peak and 5 counters in peak hours. 9 counters are installed.
+2.4 Arrival immigration: minimum 6 counters in Terminal 1 and 3 counters in Terminal 2 at all times except 00:00 to 04:59.
+2.5 Check-in desks: Terminal 1 minimum 28 off-peak and 36 in peak hours; Terminal 2 minimum 18 off-peak and 24 in peak hours.
+2.6 Security lanes: Terminal 1 minimum 5 off-peak and 7 in peak hours; Terminal 2 minimum 3 off-peak and 4 in peak hours.
+
+Section 3. Night hours
+3.1 From 00:00 to 04:59 the minimum departure immigration counters are 4 in Terminal 1 and 2 in Terminal 2.
+3.2 From 05:00 to 06:59 the minimum is 7 in Terminal 1 and 4 in Terminal 2.
+
+Section 4. Absences and shortfalls
+4.1 A reserve pool covers short-notice absence. A shortfall of more than one counter against the template must be reported to the duty manager.
+4.2 Counters left closed through absence are not an exception under section 5.
+
+Section 5. Exceptions
+5.1 An exception to a minimum in section 2 needs the written approval of the Director, Airport Operations, must have an expiry date and must be listed in this section.
+5.2 Active exception EX-2025-07: the Friday-B template reduces Terminal 1 departure immigration to 5 counters between 17:00 and 22:59 on Fridays. It was approved on 1 October 2025 pending a Friday demand study, on the assumption that Friday evening demand is lower than other evenings. It is valid until 30 June 2026.
+5.3 No renewal of exception EX-2025-07 is recorded. After 30 June 2026 the Friday-B template must provide the Standard peak minimum of 9 counters.
+5.4 The Friday demand study (reference DS-2025-11) was due in March 2026 and has not been completed.
+
+Section 6. Roster change control
+6.1 A change to a roster template needs a review of the previous 3 months of waiting-time data for the affected checkpoint.
+6.2 Rosters are reviewed monthly under section 3.4 of GIA-POL-01.
+6.3 This standard is reviewed annually. The next review is due on 1 October 2026.

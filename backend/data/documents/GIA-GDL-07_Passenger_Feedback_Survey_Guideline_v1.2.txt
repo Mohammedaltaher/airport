@@ -1,0 +1,30 @@
+GIA-GDL-07 PASSENGER FEEDBACK SURVEY GUIDELINE (version 1.2, APPROVED)
+General International Airport (fictional) - Document GIA-GDL-07, Version 1.2
+Status: APPROVED | Effective: 1 October 2025 | Next review: 1 October 2027
+Owner: Director, Passenger Experience | Approved by: Customer Experience Committee (decision CEC-2025-011, 18 September 2025)
+Supersedes: Passenger Feedback Survey Guideline v1.1 | Classification: Internal
+This is a fictional document created for training purposes.
+
+Section 1. Purpose
+1.1 This guideline explains how passenger feedback is collected, scored and reported, so that results are comparable month to month.
+
+Section 2. Collection
+2.1 Passengers are invited to rate one category after their journey through four channels: Kiosk, QR code, Mobile app and SMS.
+2.2 Roughly one passenger in eight responds. Each response is linked to the passenger journey.
+2.3 Responses may be written in English or Arabic. Both languages are analysed together.
+
+Section 3. Scoring and categories
+3.1 Scores run from 1 (very poor) to 5 (excellent).
+3.2 Categories are Waiting time, Staff, Cleanliness, Shops and dining, Wi-Fi, Signage, Security, Baggage, and Parking and transport.
+3.3 A score of 1 or 2 is negative, 3 is neutral, 4 or 5 is positive.
+
+Section 4. Data quality
+4.1 Exact duplicate submissions (same journey, category, score and comment) must be removed before any result is reported.
+4.2 A category is reported only when there are at least 30 valid responses.
+
+Section 5. Using comments
+5.1 Free-text comments are read for themes. Themes found in negative comments are compared with the operational data for the same terminal and time.
+5.2 A recurring theme in negative comments, in the same time slot, is raised as a systemic issue under GIA-SOP-05.
+
+Section 6. Reporting
+6.1 Monthly results are reported by terminal and category against the targets in GIA-POL-01 section 5.

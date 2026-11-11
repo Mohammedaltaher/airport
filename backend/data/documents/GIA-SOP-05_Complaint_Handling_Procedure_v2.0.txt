@@ -1,0 +1,28 @@
+GIA-SOP-05 COMPLAINT HANDLING PROCEDURE (version 2.0, APPROVED)
+General International Airport (fictional) - Document GIA-SOP-05, Version 2.0
+Status: APPROVED | Effective: 1 January 2026 | Next review: 1 January 2028
+Owner: Director, Passenger Experience | Approved by: Customer Experience Committee (decision CEC-2025-018, 28 November 2025)
+Supersedes: Complaint Handling Procedure v1.4 | Classification: Internal
+This is a fictional document created for training purposes.
+
+Section 1. Principles
+1.1 Every complaint and every survey comment is treated as operational data, not only as a customer issue.
+1.2 Comments in any language, including Arabic and English, are handled with the same priority.
+
+Section 2. Handling steps
+2.1 Acknowledge every complaint within 1 working day.
+2.2 Classify each complaint by category: immigration queue, missed flight, staff conduct, baggage, cleanliness, facilities, Wi-Fi, signage, flight information or other.
+2.3 Resolve individual complaints within 10 days of receipt and record the outcome. At least 90 percent of complaints must be resolved within 10 days.
+
+Section 3. Systemic issues
+3.1 When the same category appears in 10 or more complaints within 30 days, or when it appears repeatedly in the same time slot, it is a systemic issue.
+3.2 A systemic issue requires a root cause report to the Customer Experience Committee within 14 days.
+3.3 The root cause report must include the affected time slots, the number of passengers affected, the estimated commercial impact, the proposed correction and the owner of the correction.
+
+Section 4. Support for affected passengers
+4.1 A passenger who missed a flight because of an airport queue longer than 45 minutes is eligible for rebooking assistance. The airport coordinates with the airline, and cash compensation is not offered under this procedure.
+4.2 Passengers in a delay longer than 120 minutes are eligible for meal vouchers, as set out in the Delay Management SOP (GIA-SOP-04).
+
+Section 5. Reporting
+5.1 The Passenger Experience team reports complaint volumes, categories, time slots and resolution times monthly.
+5.2 Open complaints older than 10 days are escalated to the Director, Passenger Experience.

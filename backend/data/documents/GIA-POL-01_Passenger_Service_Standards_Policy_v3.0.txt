@@ -1,0 +1,45 @@
+GIA-POL-01 PASSENGER SERVICE STANDARDS POLICY (version 3.0, APPROVED)
+General International Airport (fictional) - Document GIA-POL-01, Version 3.0
+Status: APPROVED | Effective: 1 January 2026 | Next review: 1 January 2027
+Owner: Director, Passenger Experience | Approved by: Executive Committee (decision EC-2025-041, 9 December 2025)
+Supersedes: GIA-SUP-12 (Passenger Service Standards PSS-01 v2.0) | Classification: Internal
+This is a fictional document created for training purposes.
+
+Section 1. Purpose and scope
+1.1 This policy sets the minimum service levels that every passenger should experience at the airport, from arrival at the terminal to boarding or leaving.
+1.2 It applies to Terminal 1 and Terminal 2 and to the airport operator, border agencies working in the terminals, security contractors and ground handlers.
+1.3 Related documents: Counter Staffing and Roster Standard (GIA-STD-03), Peak-Period Operations and Queue Escalation SOP (GIA-SOP-06), Complaint Handling Procedure (GIA-SOP-05), KPI and Data Definitions Manual (GIA-MAN-08).
+
+Section 2. Processing time targets
+2.1 Departure check-in: the average wait must not exceed 10 minutes.
+2.2 Departure security screening: the average wait must not exceed 10 minutes.
+2.3 Departure immigration: the average wait must not exceed 15 minutes, and no more than 5 percent of departing passengers may wait longer than 30 minutes in any peak hour.
+2.4 Arrival immigration: the average wait must not exceed 15 minutes.
+2.5 Baggage reclaim: the average wait for baggage must not exceed 20 minutes.
+
+Section 3. Peak hours and immigration counters
+3.1 Peak hours are 17:00 to 22:59 every day of the week, in both terminals.
+3.2 During peak hours a minimum number of departure immigration counters must be open: 9 counters in Terminal 1 and 5 counters in Terminal 2. Minimums for other checkpoints are set in the Counter Staffing and Roster Standard.
+3.3 If the average departure immigration wait exceeds 30 minutes for 3 consecutive hours, the airport duty manager must request additional border staff immediately and record the incident, as set out in GIA-SOP-06.
+3.4 Counter rosters must be reviewed every month against the actual waiting times recorded. Any peak hour that failed the target in section 2.3 must be corrected in the next roster.
+3.5 A temporary exception to section 3.2 is allowed only through the exception process in section 5 of GIA-STD-03. An exception always has an expiry date.
+
+Section 4. Measurement
+4.1 Waiting times are measured from the passenger timing sample, which covers 4 percent of passengers.
+4.2 Compliance is assessed per terminal, per weekday and per hour band, aggregated over a calendar month.
+4.3 Sample counts are multiplied by 25 to estimate the number of passengers affected. Averages and percentages are not scaled.
+4.4 Passengers who use an automated smart gate are included in the average.
+
+Section 5. Passenger satisfaction
+5.1 The average satisfaction score must be at least 4.0 out of 5 in every survey category.
+5.2 Any category whose monthly average falls below 3.5 requires a written improvement plan within 14 days.
+5.3 A category is reported only when at least 30 responses exist for the period.
+
+Section 6. Missed flights
+6.1 If the share of departing passengers who miss their flight exceeds 1 percent in any peak hour band, an executive review of staffing and processes is mandatory.
+6.2 Airport-caused misses, where a queue longer than 45 minutes was the cause, must be reported to the Customer Experience Committee.
+6.3 Passengers affected receive rebooking assistance under section 4 of GIA-SOP-05.
+
+Section 7. Governance
+7.1 The Passenger Experience team publishes a monthly compliance report to the Customer Experience Committee by the 10th of the following month.
+7.2 This policy is reviewed once a year.
