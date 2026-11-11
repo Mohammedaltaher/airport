@@ -1,0 +1,76 @@
+---
+import '../styles/global.css';
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="DMA airport queue and staffing analysis. Evidence from operational records, guidance from applicable policies." />
+    <title>DMA | Airport Operations</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <a href="#main" class="skip-link">Skip to dashboard</a>
+    <aside class="sidebar" id="sidebar" aria-label="Primary navigation">
+      <a href="#main" class="brand" aria-label="DMA home"><span class="brand-mark"><i></i><i></i><i></i></span><span>dma<span class="brand-dot">.</span></span></a>
+      <p class="brand-caption">AIRPORT INTELLIGENCE</p>
+      <div class="nav-heading">WORKSPACE</div>
+      <nav>
+        <a class="nav-item selected" href="#main"><span class="nav-icon">▦</span> Operations overview <span class="nav-pip"></span></a>
+        <a class="nav-item" href="#patterns"><span class="nav-icon">◷</span> Queue patterns</a>
+        <a class="nav-item" href="#findings"><span class="nav-icon">≡</span> Compliance review</a>
+        <a class="nav-item" href="#assistant"><span class="nav-icon">✧</span> DMA assistant</a>
+      </nav>
+      <div class="workspace-card"><span class="workspace-icon">↗</span><strong>Decisions, with evidence.</strong><p>Operational facts and applicable policies, in one workspace.</p></div>
+      <div class="sidebar-footer"><span class="team-avatar">D</span><div><strong>Team DMA</strong><small>Course project workspace</small></div></div>
+    </aside>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="breadcrumb"><button id="menu-toggle" class="menu-toggle" aria-label="Toggle navigation" aria-expanded="false">☰</button><span>Workspace</span><span class="slash">/</span><strong>Airport operations</strong></div>
+        <div class="topbar-right"><span class="environment"><span></span> Historical analysis</span><span class="avatar" aria-label="Team DMA">DM</span></div>
+      </header>
+      <main id="main">
+        <div class="page-heading"><div><div class="eyebrow">OPERATIONS INTELLIGENCE</div><h1>A clearer view of every queue<span>.</span></h1><p>Understand waiting times. Review staffing. Make informed decisions.</p></div><a id="export" class="button button-secondary" href="/api/v1/findings.csv" download><span aria-hidden="true">↓</span> Export findings</a></div>
+        <div class="dataset-strip"><span class="dataset-label">TRAINING DATA</span><p>Fictional airport · <span id="dataset-period">October 2025 – September 2026</span> · 4% passenger sample</p><span id="connection" class="connection">Connecting…</span></div>
+        <form id="filters" class="filter-bar" aria-label="Analysis filters">
+          <label>Terminal<select name="terminal" id="terminal"><option value="T1">Terminal 1</option><option value="T2">Terminal 2</option><option value="ALL">Both terminals</option></select></label>
+          <label>From<input id="date-from" name="date_from" type="date" value="2026-09-01" required /></label>
+          <label>To<input id="date-to" name="date_to" type="date" value="2026-09-30" required /></label>
+          <label>Weekday<select id="weekday" name="weekday"><option>All</option>{['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(day => <option>{day}</option>)}</select></label>
+          <label>From hour<select id="hour-from" name="hour_from">{Array.from({length:24}, (_, h) => <option value={h} selected={h === 17}>{String(h).padStart(2,'0')}:00</option>)}</select></label>
+          <label>To hour<select id="hour-to" name="hour_to">{Array.from({length:24}, (_, h) => <option value={h} selected={h === 22}>{String(h).padStart(2,'0')}:59</option>)}</select></label>
+          <button type="submit" id="apply" class="button button-primary">Apply filters <span aria-hidden="true">→</span></button>
+        </form>
+        <div id="error" role="alert" class="message error" hidden></div>
+        <div id="loading" class="message loading" role="status">Loading airport records and applicable rules…</div>
+        <div id="empty" class="message" role="status" hidden>No sampled passenger journeys match these filters. Recorded staffing coverage may still be available.</div>
+        <section id="dashboard" aria-label="Analysis results" aria-busy="true">
+          <div class="section-top"><h2>Your operational snapshot</h2><span id="selection-label">Terminal 1 · Departure immigration</span></div>
+          <div class="metric-grid">
+            <article class="metric"><div class="metric-top"><span>Average immigration wait</span><span class="metric-symbol">◷</span></div><div class="metric-value"><span id="metric-wait">—</span><small>min</small></div><p>Passenger-weighted selected-period average</p><div class="metric-note">Descriptive · see monthly compliance below</div></article>
+            <article class="metric"><div class="metric-top"><span>Passengers waiting &gt;30 min</span><span class="metric-symbol">⌁</span></div><div class="metric-value"><span id="metric-tail">—</span><small>%</small></div><p id="sample-label">Based on measured passenger journeys</p><div class="metric-note">Percentages are not sample-scaled</div></article>
+            <article class="metric"><div class="metric-top"><span>Estimated affected passengers</span><span class="metric-symbol">♧</span></div><div class="metric-value"><span id="metric-affected">—</span></div><p>Estimated passengers waiting over 30 minutes</p><div class="metric-note">4% sample count × 25</div></article>
+            <article class="metric"><div class="metric-top"><span>Roster data coverage</span><span class="metric-symbol">▤</span></div><div class="metric-value"><span id="metric-coverage">—</span><small>%</small></div><p id="coverage-label">Checking expected checkpoint-hours</p><div id="coverage-note" class="metric-note">Missing hours remain unknown</div></article>
+          </div>
+          <div class="analysis-grid" id="patterns">
+            <section class="panel heatmap-panel"><div class="panel-heading"><div><span class="eyebrow">WHEN QUEUES BUILD</span><h2>Waiting-time patterns</h2></div><span class="pill">By weekday & hour</span></div><p class="panel-description">Average minutes in the selected period. Select a cell to investigate.</p><div id="heatmap" class="heatmap" aria-label="Waiting time by weekday and hour"></div><div class="heatmap-legend"><span>Lower wait</span><span class="gradient-key"></span><span>Higher wait</span><span class="legend-note">Intensity ≠ compliance</span></div></section>
+            <section class="panel"><div class="panel-heading"><div><span class="eyebrow">SOURCE COVERAGE</span><h2>Know the limits</h2></div><span class="info-icon">i</span></div><div id="quality-summary" class="quality-summary"></div><ul id="exclusions" class="quality-list"></ul></section>
+          </div>
+          <div class="two-columns">
+            <section class="panel"><div class="panel-heading"><div><span class="eyebrow">PASSENGER EXPERIENCE</span><h2>Waiting time by hour</h2></div><span class="unit-label">Minutes</span></div><div class="chart-wrap"><canvas id="wait-chart" role="img" aria-label="Average immigration waiting minutes by hour" aria-describedby="wait-caption"></canvas></div><p id="wait-caption" class="chart-caption">Selected-period averages. Date-appropriate targets are assessed in the findings table.</p></section>
+            <section class="panel"><div class="panel-heading"><div><span class="eyebrow">COUNTER COVERAGE</span><h2>Open counters vs requirement</h2></div><span class="unit-label">Counters</span></div><div class="chart-wrap"><canvas id="counter-chart" role="img" aria-label="Average counters open and average required counters by hour" aria-describedby="counter-caption"></canvas></div><p id="counter-caption" class="chart-caption">Observed hours only for open-counter averages. Gaps are checked hour by hour.</p></section>
+          </div>
+          <section class="panel findings-panel" id="findings"><div class="panel-heading"><div><span class="eyebrow">EVIDENCE TO ACTION</span><h2>Compliance & staffing review</h2></div><span id="findings-count" class="pill">—</span></div><div class="table-toolbar"><div class="tabs" role="group" aria-label="Finding type"><button class="tab active" data-kind="All" aria-pressed="true">All findings</button><button class="tab" data-kind="Queue" aria-pressed="false">Queues</button><button class="tab" data-kind="Staffing" aria-pressed="false">Staffing</button></div><label class="check-label"><input type="checkbox" id="only-attention" /> Needs attention only</label></div><div class="table-scroll"><table><caption class="sr-only">Monthly queue findings and recorded staffing coverage, with supporting policy references.</caption><thead><tr><th>Period / terminal</th><th>Day / hour</th><th>Review</th><th>Status</th><th>Evidence</th><th>Applicable policy</th></tr></thead><tbody id="findings-body"></tbody></table></div><div class="table-footer"><span id="table-summary">Waiting for data</span><button id="show-more" class="text-button" hidden>Show more findings ↓</button></div></section>
+          <div class="two-columns">
+            <section class="panel"><div class="panel-heading"><div><span class="eyebrow">OPERATIONAL CONTEXT</span><h2>Overlapping incidents</h2></div><span id="incident-count" class="pill">—</span></div><div id="incidents" class="event-list"></div><p class="chart-caption">Recorded time overlap is an association. It does not establish the cause of a queue.</p></section>
+            <section class="panel"><div class="panel-heading"><div><span class="eyebrow">HISTORICAL REVIEW</span><h2>Escalation candidates</h2></div><span id="escalation-count" class="pill">—</span></div><div id="escalations" class="event-list"></div><p class="chart-caption">Sample-based triggers for investigation. Operational response and flight eligibility require verification.</p></section>
+          </div>
+        </section>
+        <section class="assistant-panel" id="assistant"><div class="assistant-intro"><span class="assistant-icon">✧</span><div class="eyebrow">YOUR EVIDENCE ASSISTANT</div><h2>Ask a better<br />operational question.</h2><p>Explore the records and the rules together. DMA answers with evidence, policy references and clear limitations.</p><div id="ai-state" class="ai-state">Checking Gemini configuration…</div><div class="suggestions"><button data-question="Which selected hour bands need management attention, and what do the policies require?">What needs attention? <span>↗</span></button><button data-question="Where are counter staffing gaps recorded, and what information is missing?">Review staffing gaps <span>↗</span></button><button data-question="هل تتوافق أوقات الانتظار مع السياسة خلال الفترة المحددة؟">اسأل عن أوقات الانتظار <span>↗</span></button></div></div><div class="assistant-workspace"><div class="assistant-conversation" id="conversation" aria-live="polite"><div class="assistant-welcome"><span>✧</span><h3>Facts first. Decisions informed.</h3><p>Ask about the selected terminal and period.<br />Gemini is required for assistant answers.</p></div></div><form id="ask-form"><label for="question" class="sr-only">Ask DMA in English or Arabic</label><textarea id="question" rows="2" maxlength="2000" minlength="3" placeholder="Ask about queues, counters or applicable policies…" required dir="auto"></textarea><div class="composer-footer"><span>English & العربية · selected dashboard filters</span><button id="send" class="button button-primary" type="submit">Ask DMA <span>↗</span></button></div></form></div></section>
+        <footer class="page-footer"><span><strong>dma.</strong> Built by Team DMA</span><p>Fictional training data · Historical analysis · Recommendations require manager review</p><a href="/docs" target="_blank" rel="noopener" id="api-docs">API documentation ↗</a></footer>
+      </main>
+    </div>
+    <script>import '../scripts/dashboard';</script>
+  </body>
+</html>

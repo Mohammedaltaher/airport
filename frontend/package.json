@@ -1,0 +1,24 @@
+{
+  "name": "dma-airport-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=22.0.0" },
+  "scripts": {
+    "dev": "astro dev --host 127.0.0.1 --port 4321",
+    "build": "astro check && astro build",
+    "preview": "astro preview --host 127.0.0.1 --port 4321",
+    "test": "node --test tests/dashboard.test.mjs"
+  },
+  "dependencies": {
+    "astro": "5.13.10",
+    "chart.js": "4.6.1",
+    "tailwindcss": "4.1.13",
+    "@tailwindcss/vite": "4.1.13"
+  },
+  "devDependencies": {
+    "@astrojs/check": "0.9.12",
+    "typescript": "5.9.2",
+    "jsdom": "26.1.0"
+  }
+}

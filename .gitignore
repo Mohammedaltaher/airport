@@ -1,0 +1,12 @@
+.venv/
+.runtime/
+node_modules/
+dist/
+.astro/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+!.env.example
+logs/
+*.log
