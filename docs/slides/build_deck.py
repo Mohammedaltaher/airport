@@ -117,7 +117,7 @@ def build():
         '1    Choose the terminal and the period.',
         '2    Apply the date-correct rule in code, not inside a model prompt.',
         '3    Show the averages, where the queue builds, and each monthly finding with its policy reference.',
-        '4    Let someone ask in English or Arabic, and show the clauses the answer used.',
+        '4    Ask in English or Arabic. Show the clauses, and save the conversation for follow-up.',
         '5    Leave the roster unchanged. A manager still decides.',
     ], size=20)
 
@@ -140,13 +140,18 @@ def build():
 
     slide = deck.slides.add_slide(blank)
     content_chrome(slide, 'ASK, WITH THE SOURCES', 'A question stays inside the selected filters')
-    textbox(slide, 0.55, 1.4, 6.3, 2.2, 'Gemini answers from the verified figures and the retrieved clauses. The dashboard still works if Gemini is off.', 20, INK)
-    bullets(slide, 0.55, 3.5, 6.3, 2.8, [
-        'English and Arabic questions.',
+    textbox(slide, 0.55, 1.4, 6.3, 2.2, 'Gemini answers from the verified figures and the retrieved clauses. The exchange is saved with those filters and the sources it used.', 20, INK)
+    bullets(slide, 0.55, 3.6, 6.3, 2.8, [
+        'English and Arabic, including a follow-up.',
         'The clauses used are shown with the answer.',
         'Nothing here changes the roster.',
     ], size=18)
     picture(slide, SLIDES / '04-assistant.png', 7.35, 1.25, 5.5, 5.9)
+
+    slide = deck.slides.add_slide(blank)
+    content_chrome(slide, 'THE WORKSPACE', 'Saved chats reopen with their filters')
+    textbox(slide, 0.55, 1.15, 12.2, 0.7, 'Expand Ask DMA for the full-screen workspace. Reopening a conversation restores its last scope. A follow-up keeps the last six exchanges and retrieves fresh evidence.', 15, MUTED)
+    picture(slide, SLIDES / '05-workspace.png', 0.45, 1.9, 12.4, 5.25)
 
     deck.save(OUT)
     print(OUT)
