@@ -8,6 +8,7 @@ from llama_index.core.base.embeddings.base import BaseEmbedding
 from pydantic import PrivateAttr
 
 from dma.backend.app.embeddings import GeminiPolicyEmbedding
+from dma.backend.app.config import Settings
 from dma.backend.app.policies import PolicyRetrievalError, PolicyStore
 
 
@@ -109,3 +110,35 @@ def test_google_adapter_uses_retrieval_tasks_and_keeps_key_out_of_model(monkeypa
     assert embedding.get_query_embedding('Question') == [1.0, 0.0]
     assert client.models.embed_content.call_args.kwargs['config'].task_type == 'RETRIEVAL_QUERY'
     assert 'test-secret' not in embedding.model_dump_json()
+
+
+def test_config_controls_chunking_retrieval_and_embedding_batches(documents, tmp_path, monkeypatch):
+    for name, value in {'DMA_CHUNK_SIZE': '32', 'DMA_CHUNK_OVERLAP': '8',
+                        'DMA_SIMILARITY_TOP_K': '1', 'DMA_EMBED_BATCH_SIZE': '4'}.items():
+        monkeypatch.setenv(name, value)
+    settings = Settings(documents=documents, policy_index=tmp_path / 'cache', api_key='test-key')
+    wired = PolicyStore.from_settings(settings)
+    assert wired.embed_model.embed_batch_size == 4
+    assert wired.similarity_top_k == 1
+    (documents / 'current.txt').write_text('1.1 Immigration ' + ' '.join(f'word{i}' for i in range(100)), encoding='utf-8')
+    store = PolicyStore(documents, embed_model=TestEmbedding(), chunk_size=settings.chunk_size,
+                        chunk_overlap=settings.chunk_overlap, similarity_top_k=settings.similarity_top_k)
+    chunks = [node for node in store.nodes if node.metadata['document'] == 'GIA-TEST-01']
+    assert len(chunks) > 1
+    assert all(node.metadata['section'] == '1.1' for node in chunks)
+    assert chunks[0].metadata['text'].split()[-1] in chunks[1].metadata['text'].split()[:8]
+    assert len(store.search('border queue', date(2026, 9, 1), date(2026, 9, 30))) == 1
+    changed = PolicyStore(documents, embed_model=TestEmbedding(), index_path=tmp_path / 'cache',
+                          chunk_size=32, chunk_overlap=0)
+    overlapping = PolicyStore(documents, embed_model=TestEmbedding(), index_path=tmp_path / 'cache',
+                              chunk_size=32, chunk_overlap=8)
+    assert changed.index_path != overlapping.index_path
+
+
+@pytest.mark.parametrize('values', [
+    {'chunk_size': 0}, {'chunk_overlap': -1}, {'chunk_size': 32, 'chunk_overlap': 32},
+    {'similarity_top_k': 0}, {'embed_batch_size': 0}, {'embed_batch_size': 2049},
+])
+def test_invalid_retrieval_settings_fail_early(values):
+    with pytest.raises(ValueError):
+        Settings(**values)

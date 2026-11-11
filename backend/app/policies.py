@@ -10,10 +10,11 @@ import re
 from llama_index.core import StorageContext, VectorStoreIndex, load_index_from_storage
 from llama_index.core.base.embeddings.base import BaseEmbedding
 from llama_index.core.indices.vector_store.retrievers import VectorIndexRetriever
+from llama_index.core.node_parser import SentenceSplitter
 from llama_index.core.schema import MetadataMode, TextNode
 from llama_index.core.storage.kvstore import SimpleKVStore
 
-from .config import Settings
+from .config import DEFAULT_CHUNK_OVERLAP, DEFAULT_CHUNK_SIZE, DEFAULT_SIMILARITY_TOP_K, Settings
 from .embeddings import GeminiPolicyEmbedding
 
 
@@ -50,11 +51,17 @@ class PolicyRetrievalError(RuntimeError):
 
 
 class PolicyStore:
-    def __init__(self, folder: Path, *, embed_model: BaseEmbedding, index_path: Path | None = None):
+    def __init__(self, folder: Path, *, embed_model: BaseEmbedding, index_path: Path | None = None,
+                 chunk_size: int = DEFAULT_CHUNK_SIZE, chunk_overlap: int = DEFAULT_CHUNK_OVERLAP,
+                 similarity_top_k: int = DEFAULT_SIMILARITY_TOP_K):
         self.clauses = []
         self.embed_model = embed_model
         self._index = None
         self._index_lock = Lock()
+        if similarity_top_k < 1:
+            raise ValueError('similarity_top_k must be positive')
+        self.similarity_top_k = similarity_top_k
+        splitter = SentenceSplitter(chunk_size=chunk_size, chunk_overlap=chunk_overlap)
         register = folder / 'Document_Register.csv'
         with register.open(encoding='utf-8-sig', newline='') as stream:
             for row in csv.DictReader(stream):
@@ -78,23 +85,29 @@ class PolicyStore:
         for clause in self.clauses:
             if clause['document'] == 'GIA-DRAFT-11' or clause['status'].upper() == 'DRAFT':
                 continue
-            node_id = hashlib.sha256(json.dumps(clause, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
-            self.nodes.append(TextNode(
-                id_=node_id, text=f"{clause['document']} section {clause['section']}: {clause['text']}",
-                metadata=clause,
-            ))
-            self._clauses_by_id[node_id] = clause
+            # Split within each section so every chunk retains an exact source citation.
+            for index, text in enumerate(splitter.split_text(clause['text'])):
+                chunk = {**clause, 'text': text}
+                node_id = hashlib.sha256(json.dumps([chunk, index], sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+                self.nodes.append(TextNode(
+                    id_=node_id, text=f"{clause['document']} section {clause['section']}: {text}",
+                    metadata=chunk,
+                ))
+                self._clauses_by_id[node_id] = chunk
         # A document, metadata or embedding-model change selects a new cache.
         fingerprint = hashlib.sha256(json.dumps({
-            'schema': 1, 'model': embed_model.model_name, 'adapter': type(embed_model).__name__,
+            'schema': 2, 'model': embed_model.model_name, 'adapter': type(embed_model).__name__,
+            'chunk_size': chunk_size, 'chunk_overlap': chunk_overlap,
             'clauses': list(self._clauses_by_id.values()),
         }, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
         self.index_path = index_path / fingerprint if index_path else None
 
     @classmethod
     def from_settings(cls, settings: Settings):
-        return cls(settings.documents, embed_model=GeminiPolicyEmbedding(settings.api_key, settings.embedding_model),
-                   index_path=settings.policy_index)
+        return cls(settings.documents, embed_model=GeminiPolicyEmbedding(
+            settings.api_key, settings.embedding_model, embed_batch_size=settings.embed_batch_size),
+            index_path=settings.policy_index, chunk_size=settings.chunk_size,
+            chunk_overlap=settings.chunk_overlap, similarity_top_k=settings.similarity_top_k)
 
     def _ensure_index(self):
         with self._index_lock:
@@ -162,7 +175,7 @@ class PolicyStore:
         try:
             # Restrict the vector search BEFORE top-k so invalid policies cannot crowd out valid ones.
             retrieved = VectorIndexRetriever(
-                index=self._ensure_index(), similarity_top_k=min(14, len(candidates)), node_ids=candidates,
+                index=self._ensure_index(), similarity_top_k=min(self.similarity_top_k, len(candidates)), node_ids=candidates,
             ).retrieve(query)
         except Exception as exc:
             raise PolicyRetrievalError('Policy vector retrieval is unavailable') from exc
@@ -172,8 +185,11 @@ class PolicyStore:
         required = {('GIA-POL-01', '2.3'), ('GIA-POL-01', '4.2'), ('GIA-STD-03', '5.2'), ('GIA-STD-03', '5.3')}
         if date_from < date(2026, 1, 1):
             required |= {('GIA-SUP-12', '1.1'), ('GIA-SUP-12', '2.3')}
-        for node_id in candidates:
-            clause = self._clauses_by_id[node_id]
-            if (clause['document'], clause['section']) in required and clause not in selected:
+        eligible_sections = {(self._clauses_by_id[node_id]['document'], self._clauses_by_id[node_id]['section']) for node_id in candidates}
+        # Mandatory rules retain their complete text even when a section spans several chunks.
+        selected = [clause for clause in selected if (clause['document'], clause['section']) not in required]
+        for clause in self.clauses:
+            key = (clause['document'], clause['section'])
+            if key in required and key in eligible_sections and clause not in selected:
                 selected.append(clause)
         return selected
