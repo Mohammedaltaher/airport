@@ -337,6 +337,26 @@ textarea::placeholder { color: #9aa9b4; }
 .chat-message.user { background: #ecf2f8; color: #35546d; margin-left: 18px; }
 .chat-message.failure { background: #fff4ea; color: #8a5b32; }
 .chat-label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: .8px; font-weight: 700; color: #668d87; margin-bottom: 4px; }
+.markdown-body { white-space: normal; }
+.markdown-body > :first-child { margin-top: 0; }
+.markdown-body > :last-child { margin-bottom: 0; }
+.markdown-body p, .markdown-body ul, .markdown-body ol, .markdown-body pre, .markdown-body blockquote, .markdown-body table { margin: 0 0 12px; }
+.markdown-body strong { font-weight: 700; color: #243f50; }
+.markdown-body em { font-style: italic; }
+.markdown-body :is(h1, h2, h3, h4, h5, h6) { font-size: 15px; line-height: 1.4; font-weight: 700; color: #243f50; margin: 16px 0 8px; letter-spacing: normal; }
+.markdown-body ul { list-style: disc; padding-inline-start: 22px; }
+.markdown-body ol { list-style: decimal; padding-inline-start: 22px; }
+.markdown-body li { margin: 4px 0; }
+.markdown-body li > :is(ul, ol), .markdown-body li > p { margin-bottom: 4px; }
+.markdown-body a { color: #087f75; text-decoration: underline; text-underline-offset: 2px; }
+.markdown-body code { font-family: Consolas, monospace; font-size: .9em; background: #e4eded; border-radius: 4px; padding: 2px 4px; }
+.markdown-body pre { overflow-x: auto; padding: 10px; border-radius: 6px; background: #e4eded; white-space: pre; }
+.markdown-body pre code { padding: 0; background: transparent; }
+.markdown-body blockquote { border-inline-start: 3px solid #80aaa4; padding-inline-start: 12px; }
+.markdown-body table { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 13px; }
+.markdown-body :is(th, td) { border: 1px solid #cfdddd; padding: 6px 8px; text-align: start; }
+.markdown-body th { font-weight: 700; background: #e4eded; }
+.markdown-body hr { border: 0; border-top: 1px solid #cfdddd; margin: 12px 0; }
 .chat-citations { font-size: 12px; color: #667c8a; line-height: 1.5; }
 .chat-citations summary { cursor: pointer; color: #0d7f70; padding: 6px 0; }
 .chat-citations p { padding: 8px 0; border-bottom: 1px solid #edf1f4; }

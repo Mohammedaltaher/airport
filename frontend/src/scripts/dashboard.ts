@@ -1,4 +1,5 @@
 import Chart from 'chart.js/auto';
+import MarkdownIt from 'markdown-it';
 import type { ChartConfiguration, ChartDataset } from 'chart.js';
 
 type Filters = { terminal: string; date_from: string; date_to: string; weekday: string; hour_from: number; hour_to: number };
@@ -201,12 +202,20 @@ function renderFindings() {
   el('show-more').hidden = filtered.length <= pageSize;
 }
 
-function message(text: string, label: string, className = '') {
+// Model output is untrusted: escape HTML and let MarkdownIt validate link protocols.
+const answerMarkdown = new MarkdownIt({ html: false, breaks: true, linkify: false });
+// Keep image syntax readable without loading remote resources from model output.
+answerMarkdown.disable('image');
+
+function message(text: string, label: string, className = '', formatted = false) {
   const conversation = el('conversation');
   conversation.querySelector('.assistant-welcome')?.remove();
   const node = document.createElement('div'); node.className = `chat-message ${className}`; node.dir = 'auto';
   const heading = document.createElement('span'); heading.className = 'chat-label'; heading.textContent = label;
-  node.append(heading, document.createTextNode(text)); conversation.append(node); conversation.scrollTop = conversation.scrollHeight;
+  const body = document.createElement('div'); body.className = formatted ? 'chat-body markdown-body' : 'chat-body';
+  if (formatted) body.innerHTML = answerMarkdown.render(text);
+  else body.textContent = text;
+  node.append(heading, body); conversation.append(node); conversation.scrollTop = conversation.scrollHeight;
   return node;
 }
 
@@ -263,7 +272,7 @@ el<HTMLFormElement>('ask-form').addEventListener('submit', async event => {
   try {
     const answer = await request<Answer>('/api/v1/assistant', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, filters: scope }), signal: AbortSignal.timeout(65000) });
     pending.remove();
-    message(answer.answer, 'DMA · Gemini');
+    message(answer.answer, 'DMA · Gemini', '', true);
     if (answer.citations.length) {
       const details = document.createElement('details'); details.className = 'chat-citations';
       const summary = document.createElement('summary'); summary.textContent = `Review ${answer.citations.length} retrieved source clauses`; details.append(summary);

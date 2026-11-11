@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { JSDOM } from 'jsdom';
 import ts from 'typescript';
+import MarkdownIt from 'markdown-it';
 
 const html = readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8');
 const source = readFileSync(new URL('../src/scripts/dashboard.ts', import.meta.url), 'utf8');
@@ -20,7 +21,7 @@ function fixture(empty = false) {
   };
 }
 
-async function setup({ configured = false, empty = false, failDashboard = false, failAssistant = false } = {}) {
+async function setup({ configured = false, empty = false, failDashboard = false, failAssistant = false, answer = '<script>unsafe()</script> Test answer' } = {}) {
   const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'http://localhost:4321' });
   const { window } = dom;
   const calls = [];
@@ -37,12 +38,15 @@ async function setup({ configured = false, empty = false, failDashboard = false,
       else body = fixture(empty);
     } else if (url.includes('/assistant')) {
       status = failAssistant ? 502 : 200;
-      body = failAssistant ? { detail: 'Provider unavailable' } : { answer: '<script>unsafe()</script> Test answer', citations: [] };
+      body = failAssistant ? { detail: 'Provider unavailable' } : { answer, citations: [] };
     } else throw new Error('Unexpected request: ' + url);
     return { ok: status < 400, status, json: async () => body };
   };
   class Chart { constructor() {} destroy() {} }
-  new window.Function('require', 'exports', compiled)(name => { assert.equal(name, 'chart.js/auto'); return Chart; }, {});
+  new window.Function('require', 'exports', compiled)(name => {
+    if (name === 'markdown-it') return MarkdownIt;
+    assert.equal(name, 'chart.js/auto'); return Chart;
+  }, {});
   await pause();
   return { dom, window, calls, doc: window.document };
 }
@@ -117,4 +121,28 @@ test('assistant shows provider failure and renders model text without HTML execu
       assert.equal(doc.getElementById('send').disabled, false);
     } finally { dom.window.close(); }
   }
+});
+
+test('assistant formats Markdown replies while keeping user text and unsafe content inert', async () => {
+  const answer = '**Finding:** Queue breach.\n\n## Next steps\n\n1. **Review** staffing.\n2. Check *coverage* and `counters`.\n\n| Terminal | Minimum |\n| --- | --- |\n| T1 | 9 |\n\n[Policy](https://example.com/policy)\n\n[Unsafe](javascript:alert(1))\n\n<img src=x onerror=alert(1)>\n\n![tracking](https://example.com/pixel.png)\n\n**النتيجة:** مراجعة التوظيف';
+  const { dom, window, doc } = await setup({ configured: true, answer });
+  try {
+    doc.getElementById('question').value = '**Review** staffing';
+    doc.getElementById('ask-form').dispatchEvent(new window.Event('submit', { cancelable: true }));
+    await pause();
+    const body = doc.querySelector('.markdown-body');
+    assert.equal(body.querySelector('strong').textContent, 'Finding:');
+    assert.equal(body.querySelector('h2').textContent, 'Next steps');
+    assert.equal(body.querySelectorAll('ol > li').length, 2);
+    assert.equal(body.querySelector('em').textContent, 'coverage');
+    assert.equal(body.querySelector('code').textContent, 'counters');
+    assert.equal(body.querySelector('td').textContent, 'T1');
+    assert.equal(body.querySelector('a[href^="javascript:"]'), null);
+    assert.equal(body.querySelector('a').getAttribute('href'), 'https://example.com/policy');
+    assert.equal(body.querySelector('img, script, [onerror]'), null);
+    assert.match(body.textContent, /النتيجة:/);
+    assert.equal(body.parentElement.dir, 'auto');
+    assert.equal(doc.querySelector('.chat-message.user strong'), null);
+    assert.match(doc.querySelector('.chat-message.user').textContent, /\*\*Review\*\*/);
+  } finally { dom.window.close(); }
 });
