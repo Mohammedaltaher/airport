@@ -13,7 +13,8 @@ from fastapi.testclient import TestClient
 from google.genai import types
 
 from dma.backend.app.analytics import Analytics, queue_statistics
-from dma.backend.app.assistant import Assistant
+from dma.backend.app.assistant import NOT_IN_DOCUMENTS, POLICY_PROMPT, Assistant
+from dma.backend.app.sql_tool import SELECT_ONLY, query_airport_database
 from dma.backend.app.config import PROJECT, Settings
 from dma.backend.app.main import create_app
 from dma.backend.app.models import AssistantRequest, Filters
@@ -261,3 +262,80 @@ def test_real_database_independent_sql(tmp_path):
     assert result['metrics']['estimated_affected_passengers'] == tail * 25
     assert result['metrics']['pct_over_30'] == round(tail / count * 100, 2)
     assert result['metrics']['observed_roster_hours'] == roster_count
+
+
+def test_sql_tool_rejects_writes_and_caps_rows(settings):
+    assert not settings.chat_database.exists()
+    assert query_airport_database(settings, 'DELETE FROM meta') == SELECT_ONLY
+    assert query_airport_database(settings, 'SELECT 1; DELETE FROM meta') == SELECT_ONLY
+    blocked = query_airport_database(settings, 'WITH x AS (SELECT 1) DELETE FROM meta')
+    assert blocked.startswith('SQL error:')
+    with sqlite3.connect(settings.database) as con:
+        assert con.execute('SELECT COUNT(*) FROM meta').fetchone()[0] == 1
+        con.executemany('INSERT INTO meta VALUES (?, ?)', [(str(i), 'v') for i in range(40)])
+    text = query_airport_database(settings, 'SELECT key, value FROM meta')
+    table, note = text.rsplit('\n', 1)
+    assert note == '(first 30 of 41 rows shown)'
+    assert len(table.splitlines()) == 31
+    assert not settings.chat_database.exists()
+    with sqlite3.connect(settings.database.as_uri() + '?mode=ro', uri=True) as con:
+        with pytest.raises(sqlite3.OperationalError):
+            con.execute('DELETE FROM meta')
+
+
+class _Clauses:
+    def search(self, query, date_from, date_to):
+        return [{
+            'document': 'GIA-POL-01', 'section': '2.3', 'status': 'APPROVED',
+            'effective': '1 January 2026', 'text': 'Average wait must not exceed 15 minutes.',
+        }]
+
+
+class _NoClauses:
+    def search(self, query, date_from, date_to):
+        return []
+
+
+def test_assistant_runs_the_sql_tool(settings):
+    assistant = Assistant(settings, Analytics(settings), _NoClauses())
+    call = types.FunctionCall(name='airport_database', args={'sql': 'SELECT COUNT(*) AS rows FROM meta'})
+    tool_response = SimpleNamespace(function_calls=[call], candidates=[SimpleNamespace(content=types.Content(role='model', parts=[types.Part(function_call=call)]))])
+    final = SimpleNamespace(function_calls=[], text='Finding: the meta table has one row.')
+    assistant.gateway.generate = AsyncMock(side_effect=[tool_response, final])
+    answer = asyncio.run(assistant.answer(AssistantRequest(question='How many meta rows are stored?')))
+    assert answer['tools_used'] == ['airport_database']
+    assert 'airport_database' in (settings.logs / 'tools.jsonl').read_text(encoding='utf-8')
+
+
+def test_policy_tool_uses_its_own_prompt(settings):
+    assistant = Assistant(settings, Analytics(settings), _Clauses())
+    seen = []
+
+    async def generate(contents, use_tools=True, system=None):
+        seen.append((use_tools, system))
+        if len(seen) == 1:
+            call = types.FunctionCall(name='policy_search', args={'query': 'waiting time limit'})
+            return SimpleNamespace(function_calls=[call], candidates=[SimpleNamespace(content=types.Content(role='model', parts=[types.Part(function_call=call)]))])
+        if len(seen) == 2:
+            assert 'Context:' in contents[0].parts[0].text
+            return SimpleNamespace(function_calls=[], text='15 minutes [GIA-POL-01, 2.3].')
+        return SimpleNamespace(function_calls=[], text='Finding: the cited limit applies.')
+
+    assistant.gateway.generate = generate
+    answer = asyncio.run(assistant.answer(AssistantRequest(question='What is the waiting-time limit?')))
+    assert seen[1] == (False, POLICY_PROMPT)
+    assert answer['tools_used'] == ['policy_search']
+    assert answer['citations']
+
+
+def test_empty_policy_retrieval_skips_the_model(settings):
+    assistant = Assistant(settings, Analytics(settings), _NoClauses())
+    call = types.FunctionCall(name='policy_search', args={'query': 'daily parking tariff'})
+    tool_response = SimpleNamespace(function_calls=[call], candidates=[SimpleNamespace(content=types.Content(role='model', parts=[types.Part(function_call=call)]))])
+    final = SimpleNamespace(function_calls=[], text='I could not find this.')
+    assistant.gateway.generate = AsyncMock(side_effect=[tool_response, final])
+    asyncio.run(assistant.answer(AssistantRequest(question='What is the daily parking tariff?')))
+    assert assistant.gateway.generate.await_count == 2
+    contents = assistant.gateway.generate.await_args_list[1].args[0]
+    responses = [part.function_response for content in contents for part in content.parts if part.function_response]
+    assert responses and responses[0].response['result']['answer'] == NOT_IN_DOCUMENTS

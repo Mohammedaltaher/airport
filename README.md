@@ -121,12 +121,16 @@ Assistant requests contain `question` (3–2000 characters) and the same `filter
 object. OpenAPI documents the full validation contract.
 
 The assistant receives verified baseline statistics and date-filtered policy
-clauses. It may call queue, staffing, incident and policy-search tools for up to
+clauses. It may call queue, staffing, and incident tools for the selected period,
+a policy tool that answers from those clauses, and a read-only SQL tool for other
+measured questions. The SQL tool accepts one `SELECT` or `WITH` statement, opens
+only the airport database read-only, and returns at most 30 rows. The loop allows
 five rounds, with at most four executed tools per round, then must answer.
-The overall deadline is 60 seconds. It never executes model-generated SQL.
+The overall deadline is 60 seconds.
 English and Arabic questions are supported; policy sources are in English.
 Clause search uses lexical ranking plus mandatory measurement and exception
-context, without a separate embedding service.
+context, without a separate embedding service. The policy tool answers from the
+retrieved clauses under its own prompt and cites the document and section.
 
 ## Measurement and policy decisions
 
