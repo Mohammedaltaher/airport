@@ -21,7 +21,10 @@ type Dashboard = {
   data_period: { from: string; to: string };
 };
 type Clause = { document: string; section: string; version: string; status: string; effective: string; text: string };
-type Answer = { answer: string; citations: Clause[]; filters: Filters };
+type Answer = { answer: string; citations: Clause[]; filters: Filters; conversation_id: string };
+type ConversationSummary = { id: string; title: string; updated_at: string };
+type SavedMessage = { role: 'user' | 'assistant'; content: string; filters: Filters; citations: Clause[] };
+type Conversation = ConversationSummary & { messages: SavedMessage[] };
 const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const el = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
 const format = (value: number | null | undefined, digits = 1) => value == null ? '—' : value.toLocaleString('en', { maximumFractionDigits: digits, minimumFractionDigits: digits });
@@ -37,6 +40,22 @@ let waitChart: Chart | null = null;
 let counterChart: Chart | null = null;
 let geminiConfigured = false;
 let asking = false;
+let loadingConversation = false;
+let activeConversation: string | null = null;
+let conversationScope: Filters | null = null;
+let savedConversations: ConversationSummary[] = [];
+let historyGeneration = 0;
+let restoredHistory = false;
+let fullscreen = false;
+function stored(key: string, value?: string | null): string | null {
+  try {
+    if (value === null) localStorage.removeItem(key);
+    else if (value !== undefined) localStorage.setItem(key, value);
+    return localStorage.getItem(key);
+  } catch { return null; }
+}
+const clientId = stored('dma-chat-client') || crypto.randomUUID();
+stored('dma-chat-client', clientId);
 
 function readFilters(): Filters {
   const fields = new FormData(el<HTMLFormElement>('filters'));
@@ -58,7 +77,11 @@ async function request<T>(url: string, options?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 function setText(id: string, text: string) { el(id).textContent = text; }
-function syncAssistantButton() { el<HTMLButtonElement>('send').disabled = !geminiConfigured || !applied || asking; }
+function syncAssistantButton() {
+  el<HTMLButtonElement>('send').disabled = !geminiConfigured || !(conversationScope || applied) || asking || loadingConversation;
+  ['chat-new', 'chat-new-compact', 'chat-dashboard-scope'].forEach(id => { el<HTMLButtonElement>(id).disabled = asking || loadingConversation; });
+  el('chat-history').querySelectorAll('button').forEach(button => { button.disabled = asking || loadingConversation; });
+}
 
 async function load() {
   const filters = readFilters();
@@ -234,13 +257,112 @@ document.querySelectorAll<HTMLAnchorElement>('.nav-links a').forEach(link => lin
 }));
 
 let chatTrigger: HTMLElement | null = null;
+function scopeLabel(scope: Filters) {
+  return `${scope.terminal}, ${scope.date_from}–${scope.date_to}, ${scope.weekday}, ${hourLabel(scope.hour_from)}–${String(scope.hour_to).padStart(2, '0')}:59`;
+}
+function showScope() {
+  setText('chat-scope', conversationScope ? `Conversation scope: ${scopeLabel(conversationScope)}` : 'Using selected dashboard filters');
+  el('chat-dashboard-scope').hidden = !conversationScope;
+}
+function citations(clauses: Clause[]) {
+  if (!clauses.length) return;
+  const details = document.createElement('details'); details.className = 'chat-citations';
+  const summary = document.createElement('summary'); summary.textContent = `Review ${clauses.length} retrieved source clauses`; details.append(summary);
+  clauses.forEach(clause => {
+    const paragraph = document.createElement('p'); paragraph.textContent = `${clause.document} section ${clause.section}, v${clause.version}, ${clause.status}, effective ${clause.effective}\n${clause.text}`;
+    paragraph.dir = 'auto'; details.append(paragraph);
+  });
+  el('conversation').append(details);
+}
+function renderHistory() {
+  const list = el('chat-history'); list.replaceChildren();
+  savedConversations.forEach(item => {
+    const button = document.createElement('button'); button.type = 'button'; button.dir = 'auto'; button.className = 'history-item';
+    button.setAttribute('aria-current', String(item.id === activeConversation));
+    const title = document.createElement('span'); title.textContent = item.title;
+    const date = document.createElement('small'); date.textContent = new Date(item.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    button.append(title, date); button.addEventListener('click', () => { void openConversation(item.id); }); list.append(button);
+  });
+  syncAssistantButton();
+}
+async function loadHistory() {
+  const ticket = ++historyGeneration;
+  setText('history-status', 'Loading conversations…'); el('history-retry').hidden = true;
+  try {
+    const result = await request<{ conversations: ConversationSummary[] }>(`/api/v1/conversations?client_id=${clientId}`, { signal: AbortSignal.timeout(10000) });
+    if (ticket !== historyGeneration) return;
+    savedConversations = result.conversations;
+    renderHistory();
+    setText('history-status', savedConversations.length ? `${savedConversations.length} saved conversation${savedConversations.length === 1 ? '' : 's'}` : 'No conversations yet. Start a new chat.');
+  } catch (err) {
+    if (ticket !== historyGeneration) return;
+    setText('history-status', err instanceof Error ? err.message : 'Could not load history.');
+    el('history-retry').hidden = false;
+  }
+}
+async function openConversation(id: string) {
+  if (asking || loadingConversation) return;
+  loadingConversation = true; syncAssistantButton(); el('conversation').setAttribute('aria-busy', 'true');
+  try {
+    const saved = await request<Conversation>(`/api/v1/conversations/${id}?client_id=${clientId}`, { signal: AbortSignal.timeout(10000) });
+    activeConversation = saved.id; stored('dma-chat-active', saved.id);
+    conversationScope = saved.messages.at(-1)?.filters ?? null;
+    setText('conversation-title', saved.title); el('conversation').replaceChildren();
+    saved.messages.forEach(item => {
+      if (item.role === 'user') message(`${item.content}\n\nScope: ${scopeLabel(item.filters)}`, 'You', 'user');
+      else { message(item.content, 'DMA · Gemini', '', true); citations(item.citations); }
+    });
+    showScope(); renderHistory();
+    el('conversation').scrollTop = el('conversation').scrollHeight;
+    el('question').focus();
+  } catch (err) {
+    setText('history-status', err instanceof Error ? err.message : 'Could not open conversation.');
+    el('history-retry').hidden = false;
+  } finally { loadingConversation = false; syncAssistantButton(); el('conversation').removeAttribute('aria-busy'); }
+}
+function newConversation() {
+  if (asking || loadingConversation) return;
+  activeConversation = null; conversationScope = null; stored('dma-chat-active', null);
+  setText('conversation-title', 'New conversation'); el('conversation').replaceChildren();
+  const welcome = document.createElement('div'); welcome.className = 'assistant-welcome';
+  const title = document.createElement('h3'); title.textContent = 'What would you like to explore?';
+  const text = document.createElement('p'); text.textContent = 'Ask about queues, staffing or policies. Your conversation will be saved automatically.';
+  welcome.append(title, text); el('conversation').append(welcome);
+  el<HTMLTextAreaElement>('question').value = ''; showScope(); renderHistory(); el('question').focus();
+}
+function setFullscreen(expanded: boolean) {
+  fullscreen = expanded;
+  el('assistant').classList.toggle('is-fullscreen', expanded);
+  document.body.classList.toggle('chat-fullscreen', expanded);
+  el('assistant').setAttribute('aria-modal', String(expanded));
+  document.querySelectorAll<HTMLElement>('body > main, body > header, body > .skip-link, #chat-fab').forEach(node => { node.inert = expanded; });
+  el('chat-fullscreen').setAttribute('aria-pressed', String(expanded));
+  el('chat-fullscreen').setAttribute('aria-label', expanded ? 'Return to compact chat' : 'Expand chat to full screen');
+  el('chat-fullscreen').title = expanded ? 'Exit full screen' : 'Full screen';
+  el('chat-fullscreen').textContent = expanded ? '↙' : '⛶';
+  if (expanded) void loadHistory();
+  el('question').focus();
+}
+el('chat-fullscreen').addEventListener('click', () => setFullscreen(!fullscreen));
+el('chat-new').addEventListener('click', newConversation);
+el('chat-new-compact').addEventListener('click', newConversation);
+el('history-retry').addEventListener('click', () => { void loadHistory(); });
+el('chat-dashboard-scope').addEventListener('click', () => { conversationScope = null; showScope(); syncAssistantButton(); });
 function setChatOpen(open: boolean) {
+  if (!open && fullscreen) setFullscreen(false);
   const panel = el('assistant');
   panel.hidden = !open;
   document.body.classList.toggle('chat-open', open);
   ['chat-fab', 'ask-dma'].forEach(id => el(id).setAttribute('aria-expanded', String(open)));
   el('chat-fab').setAttribute('aria-label', open ? 'Close DMA assistant' : 'Ask DMA');
-  if (open) el<HTMLTextAreaElement>('question').focus();
+  if (open) {
+    el<HTMLTextAreaElement>('question').focus();
+    if (!restoredHistory) {
+      restoredHistory = true;
+      const last = stored('dma-chat-active');
+      if (last) void openConversation(last);
+    }
+  }
   else {
     const restore = chatTrigger;
     chatTrigger = null;
@@ -258,27 +380,36 @@ el('chat-fab').addEventListener('click', () => {
 });
 el('ask-dma').addEventListener('click', () => openChat(el('ask-dma')));
 el('chat-close').addEventListener('click', () => setChatOpen(false));
-document.addEventListener('keydown', event => { if (event.key === 'Escape' && !el('assistant').hidden) setChatOpen(false); });
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !el('assistant').hidden) {
+    if (fullscreen) setFullscreen(false); else setChatOpen(false);
+  }
+  if (event.key === 'Tab' && fullscreen) {
+    const focusable = [...el('assistant').querySelectorAll<HTMLElement>('button:not(:disabled), textarea, summary, a[href]')].filter(node => !node.closest('[hidden]') && node.getClientRects().length);
+    const first = focusable[0], last = focusable.at(-1);
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+  }
+});
 el<HTMLFormElement>('ask-form').addEventListener('submit', async event => {
   event.preventDefault();
-  if (!applied || !geminiConfigured || asking) return;
+  if (!(conversationScope || applied) || !geminiConfigured || asking || loadingConversation) return;
   const question = el<HTMLTextAreaElement>('question').value.trim();
   if (question.length < 3) return;
-  const scope = { ...applied };
+  const scope = { ...(conversationScope || applied)! };
   asking = true; syncAssistantButton();
   message(`${question}\n\nScope: ${scope.terminal}, ${scope.date_from}–${scope.date_to}, ${scope.weekday}, ${hourLabel(scope.hour_from)}–${String(scope.hour_to).padStart(2, '0')}:59`, 'You', 'user');
   const pending = message('Checking operational evidence and applicable policies…', 'DMA');
   el<HTMLTextAreaElement>('question').value = '';
   try {
-    const answer = await request<Answer>('/api/v1/assistant', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, filters: scope }), signal: AbortSignal.timeout(65000) });
+    const answer = await request<Answer>('/api/v1/assistant', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question, filters: scope, client_id: clientId, conversation_id: activeConversation }), signal: AbortSignal.timeout(65000) });
     pending.remove();
     message(answer.answer, 'DMA · Gemini', '', true);
-    if (answer.citations.length) {
-      const details = document.createElement('details'); details.className = 'chat-citations';
-      const summary = document.createElement('summary'); summary.textContent = `Review ${answer.citations.length} retrieved source clauses`; details.append(summary);
-      answer.citations.forEach(clause => { const paragraph = document.createElement('p'); paragraph.textContent = `${clause.document} section ${clause.section}, v${clause.version}, ${clause.status}, effective ${clause.effective}\n${clause.text}`; paragraph.dir = 'auto'; details.append(paragraph); });
-      el('conversation').append(details);
-    }
+    citations(answer.citations);
+    if (!activeConversation) setText('conversation-title', question);
+    activeConversation = answer.conversation_id; stored('dma-chat-active', activeConversation);
+    await loadHistory();
+    el('conversation').scrollTop = el('conversation').scrollHeight;
   } catch (err) {
     pending.remove();
     message(err instanceof Error ? err.message : 'Gemini could not answer this request.', 'Assistant unavailable', 'failure');

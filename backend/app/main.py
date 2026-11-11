@@ -1,6 +1,8 @@
 from contextlib import closing
 from io import StringIO
 from typing import Annotated
+from uuid import UUID
+import asyncio
 import csv
 import sqlite3
 
@@ -11,6 +13,7 @@ from fastapi.staticfiles import StaticFiles
 
 from .analytics import Analytics
 from .assistant import Assistant
+from .chat_history import ChatHistory
 from .config import PROJECT, Settings
 from .models import AssistantRequest, Filters
 from .policies import PolicyStore
@@ -21,13 +24,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title='DMA Airport Queue and Staffing Assistant', version='1.0.0')
     app.add_middleware(CORSMiddleware, allow_origins=settings.origins, allow_methods=['GET', 'POST'], allow_headers=['Content-Type'])
     analytics = Analytics(settings)
+    history = ChatHistory(settings.chat_database)
     app.state.settings = settings
     app.state.analytics = analytics
     app.state.assistant = None
 
     @app.exception_handler(sqlite3.Error)
     async def database_error(_request: Request, _exc: Exception):
-        return JSONResponse(status_code=503, content={'detail': 'Airport database is unavailable or incompatible. Check DMA_DATABASE_PATH and restore the supplied database.'})
+        return JSONResponse(status_code=503, content={'detail': 'A database is unavailable or incompatible. Check DMA_DATABASE_PATH and DMA_CHAT_DATABASE_PATH, including directory permissions.'})
 
     @app.exception_handler(FileNotFoundError)
     async def source_error(_request: Request, _exc: Exception):
@@ -66,14 +70,30 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             writer.writerow({**finding, 'exclusions': ' | '.join(data['exclusions']), 'date_from': str(filters.date_from), 'date_to': str(filters.date_to)})
         return Response('\ufeff' + stream.getvalue(), media_type='text/csv; charset=utf-8', headers={'Content-Disposition': 'attachment; filename="dma-findings.csv"'})
 
+    @app.get('/api/v1/conversations')
+    def conversations(client_id: UUID):
+        return {'conversations': history.list(str(client_id))}
+
+    @app.get('/api/v1/conversations/{conversation_id}')
+    def conversation(conversation_id: UUID, client_id: UUID):
+        saved = history.get(str(client_id), str(conversation_id))
+        if saved is None:
+            raise HTTPException(404, 'Conversation not found.')
+        return saved
+
     @app.post('/api/v1/assistant')
     async def assistant(request: AssistantRequest):
         if not settings.assistant_configured:
             raise HTTPException(503, 'Gemini is not configured. Set GEMINI_API_KEY and GEMINI_MODEL on the server. Dashboard analysis remains available.')
+        previous = None
+        if request.conversation_id:
+            previous = await asyncio.to_thread(history.get, str(request.client_id), str(request.conversation_id))
+            if previous is None:
+                raise HTTPException(404, 'Conversation not found.')
         if app.state.assistant is None:
             app.state.assistant = Assistant(settings, analytics, PolicyStore(settings.documents))
         try:
-            return await app.state.assistant.answer(request)
+            answer = await app.state.assistant.answer(request, history=previous['messages'] if previous else [])
         except TimeoutError:
             raise HTTPException(504, 'The assistant exceeded its 60-second deadline. Try a narrower question or period.')
         except (sqlite3.Error, FileNotFoundError):
@@ -81,6 +101,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except Exception:
             # Never expose provider exceptions: they may contain request credentials.
             raise HTTPException(502, 'Gemini could not complete this request. Check model access, credentials and quota, then retry. Dashboard analysis remains available.')
+        conversation_id = await asyncio.to_thread(history.save_exchange, str(request.client_id),
+                                                  str(request.conversation_id) if request.conversation_id else None,
+                                                  request.question, request.filters.model_dump(mode='json'), answer)
+        return {**answer, 'conversation_id': conversation_id}
 
     build = PROJECT / 'frontend' / 'dist'
     if build.is_dir():

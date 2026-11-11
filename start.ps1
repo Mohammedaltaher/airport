@@ -27,7 +27,7 @@ if ($Mode -eq 'built') {
 if (-not (Test-Path -LiteralPath (Join-Path $frontendPath 'node_modules'))) { throw 'Run npm ci inside dma/frontend first.' }
 $dmaNpm = (Get-Command npm -ErrorAction Stop).Source
 New-Item -ItemType Directory -Force -Path (Join-Path $dmaRoot 'logs') | Out-Null
-$dmaBackend = Start-Process -FilePath $PythonPath -ArgumentList @('-m', 'uvicorn', 'app.main:app', '--app-dir', "`"$backendPath`"", '--host', '127.0.0.1', '--port', '8000') -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $dmaRoot 'logs/server-output.log') -RedirectStandardError (Join-Path $dmaRoot 'logs/server-error.log')
+$dmaBackend = Start-Process -FilePath $PythonPath -ArgumentList @('-m', 'uvicorn', 'app.main:app', '--app-dir', "`"$backendPath`"", '--host', '127.0.0.1', '--port', '8000', '--reload', '--reload-dir', "`"$backendPath/app`"") -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $dmaRoot 'logs/server-output.log') -RedirectStandardError (Join-Path $dmaRoot 'logs/server-error.log')
 try {
     Start-Sleep -Seconds 2
     if ($dmaBackend.HasExited) { throw 'Backend failed to start. Check dma/logs/server-error.log; port 8000 may already be occupied.' }

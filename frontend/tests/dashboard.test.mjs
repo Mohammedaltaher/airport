@@ -21,10 +21,12 @@ function fixture(empty = false) {
   };
 }
 
-async function setup({ configured = false, empty = false, failDashboard = false, failAssistant = false, answer = '<script>unsafe()</script> Test answer' } = {}) {
+async function setup({ configured = false, empty = false, failDashboard = false, failAssistant = false, failHistory = false, answer = '<script>unsafe()</script> Test answer', initialStorage = {} } = {}) {
   const dom = new JSDOM(html, { runScripts: 'outside-only', url: 'http://localhost:4321' });
   const { window } = dom;
   const calls = [];
+  const conversations = new Map();
+  for (const [key, value] of Object.entries(initialStorage)) window.localStorage.setItem(key, value);
   window.AbortSignal = AbortSignal;
   window.HTMLElement.prototype.scrollIntoView = () => {};
   window.fetch = async (url, options = {}) => {
@@ -36,9 +38,23 @@ async function setup({ configured = false, empty = false, failDashboard = false,
     else if (url.includes('/dashboard')) {
       if (failDashboard) { status = 503; body = { detail: 'Source unavailable' }; }
       else body = fixture(empty);
+    } else if (url.includes('/conversations')) {
+      if (failHistory) { status = 503; body = { detail: 'Chat database unavailable' }; }
+      else {
+        const id = new URL(url, window.location.href).pathname.split('/')[4];
+        body = id ? conversations.get(id) : { conversations: [...conversations.values()] };
+      }
     } else if (url.includes('/assistant')) {
       status = failAssistant ? 502 : 200;
-      body = failAssistant ? { detail: 'Provider unavailable' } : { answer, citations: [] };
+      if (failAssistant) body = { detail: 'Provider unavailable' };
+      else {
+        const input = JSON.parse(options.body);
+        const id = input.conversation_id || window.crypto.randomUUID();
+        const saved = conversations.get(id) || { id, title: input.question, updated_at: '2026-11-11T12:00:00Z', messages: [] };
+        saved.messages.push({ role: 'user', content: input.question, filters: input.filters, citations: [] }, { role: 'assistant', content: answer, filters: input.filters, citations: [] });
+        conversations.set(id, saved);
+        body = { answer, citations: [], conversation_id: id, filters: input.filters };
+      }
     } else throw new Error('Unexpected request: ' + url);
     return { ok: status < 400, status, json: async () => body };
   };
@@ -48,7 +64,7 @@ async function setup({ configured = false, empty = false, failDashboard = false,
     assert.equal(name, 'chart.js/auto'); return Chart;
   }, {});
   await pause();
-  return { dom, window, calls, doc: window.document };
+  return { dom, window, calls, conversations, doc: window.document };
 }
 
 test('filters, export and heatmap use applied scope; unconfigured Gemini is explicit', async () => {
@@ -115,12 +131,85 @@ test('assistant shows provider failure and renders model text without HTML execu
       doc.getElementById('question').value = 'Review staffing gaps';
       doc.getElementById('ask-form').dispatchEvent(new window.Event('submit', { cancelable: true }));
       await pause();
-      assert.equal(JSON.parse(calls.at(-1).options.body).filters.terminal, 'T1');
+      assert.equal(JSON.parse(calls.find(call => call.url === '/api/v1/assistant').options.body).filters.terminal, 'T1');
       assert.match(doc.getElementById('conversation').textContent, failure ? /Provider unavailable/ : /<script>unsafe/);
       assert.equal(doc.getElementById('conversation').querySelector('script'), null);
       assert.equal(doc.getElementById('send').disabled, false);
     } finally { dom.window.close(); }
   }
+});
+
+test('full screen saves, lists, reopens and continues conversations with their original scope', async () => {
+  const { dom, window, calls, doc } = await setup({ configured: true, answer: '**Finding:** Saved answer' });
+  try {
+    doc.getElementById('ask-dma').click();
+    doc.getElementById('chat-fullscreen').click();
+    await pause();
+    assert.equal(doc.getElementById('assistant').classList.contains('is-fullscreen'), true);
+    assert.equal(doc.getElementById('assistant').getAttribute('aria-modal'), 'true');
+    doc.getElementById('question').value = 'Review saved staffing';
+    doc.getElementById('ask-form').dispatchEvent(new window.Event('submit', { cancelable: true }));
+    await pause();
+    const first = JSON.parse(calls.find(call => call.url === '/api/v1/assistant').options.body);
+    assert.equal(first.client_id, window.localStorage.getItem('dma-chat-client'));
+    const id = window.localStorage.getItem('dma-chat-active');
+    assert.ok(id);
+    assert.equal(doc.querySelectorAll('.history-item').length, 1);
+    doc.getElementById('chat-new').click();
+    assert.equal(window.localStorage.getItem('dma-chat-active'), null);
+    assert.equal(doc.querySelectorAll('.chat-message').length, 0);
+    doc.getElementById('terminal').value = 'T2';
+    doc.getElementById('filters').dispatchEvent(new window.Event('submit', { cancelable: true }));
+    await pause();
+    doc.querySelector('.history-item').click();
+    await pause();
+    assert.equal(doc.querySelectorAll('.chat-message').length, 2);
+    assert.equal(doc.querySelector('.markdown-body strong').textContent, 'Finding:');
+    assert.equal(doc.querySelector('.history-item').getAttribute('aria-current'), 'true');
+    assert.match(doc.getElementById('chat-scope').textContent, /T1/);
+    doc.getElementById('question').value = 'What should happen next?';
+    doc.getElementById('ask-form').dispatchEvent(new window.Event('submit', { cancelable: true }));
+    await pause();
+    const followup = JSON.parse(calls.filter(call => call.url === '/api/v1/assistant').at(-1).options.body);
+    assert.equal(followup.conversation_id, id);
+    assert.equal(followup.filters.terminal, 'T1');
+    doc.getElementById('chat-dashboard-scope').click();
+    assert.equal(doc.getElementById('chat-dashboard-scope').hidden, true);
+    doc.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape' }));
+    assert.equal(doc.getElementById('assistant').classList.contains('is-fullscreen'), false);
+    assert.equal(doc.getElementById('assistant').hidden, false);
+    assert.equal(doc.getElementById('main').inert, false);
+    doc.getElementById('chat-close').click();
+    assert.equal(doc.getElementById('assistant').hidden, true);
+  } finally { dom.window.close(); }
+});
+
+test('history failures remain visible and allow starting a new conversation', async () => {
+  const { dom, doc } = await setup({ configured: true, failHistory: true });
+  try {
+    doc.getElementById('ask-dma').click(); doc.getElementById('chat-fullscreen').click();
+    await pause();
+    assert.match(doc.getElementById('history-status').textContent, /Chat database unavailable/);
+    assert.equal(doc.getElementById('history-retry').hidden, false);
+    assert.equal(doc.getElementById('chat-new').disabled, false);
+  } finally { dom.window.close(); }
+});
+
+test('opening chat after a reload restores the last saved conversation without requiring Gemini', async () => {
+  const owner = '11111111-1111-4111-8111-111111111111';
+  const id = '22222222-2222-4222-8222-222222222222';
+  const { dom, doc, conversations } = await setup({ initialStorage: { 'dma-chat-client': owner, 'dma-chat-active': id } });
+  conversations.set(id, { id, title: 'Earlier discussion', updated_at: '2026-11-11T12:00:00Z', messages: [
+    { role: 'user', content: 'Review staffing', filters: fixture().filters, citations: [] },
+    { role: 'assistant', content: '**Finding:** Saved discussion', filters: fixture().filters, citations: [] },
+  ] });
+  try {
+    doc.getElementById('ask-dma').click(); await pause();
+    assert.equal(doc.getElementById('conversation-title').textContent, 'Earlier discussion');
+    assert.equal(doc.querySelectorAll('.chat-message').length, 2);
+    assert.equal(doc.querySelector('.markdown-body strong').textContent, 'Finding:');
+    assert.equal(doc.getElementById('send').disabled, true);
+  } finally { dom.window.close(); }
 });
 
 test('assistant formats Markdown replies while keeping user text and unsafe content inert', async () => {

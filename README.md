@@ -61,6 +61,7 @@ source paths are resolved against `dma/`, independent of the working directory.
 | Setting | Purpose |
 |---|---|
 | `DMA_DATABASE_PATH` | Defaults to `backend/data/database/airport_ops.db`. |
+| `DMA_CHAT_DATABASE_PATH` | Separate writable SQLite chat store, created automatically at `backend/data/chat/history.db`. |
 | `DMA_DOCUMENTS_PATH` | Defaults to `backend/data/documents`. Requires the document register and TXT files. |
 | `GEMINI_API_KEY` | Server-side Gemini credential. Never sent to the browser. |
 | `GEMINI_MODEL` | An available model ID from your Gemini account; no guessed default. |
@@ -80,7 +81,17 @@ The default view is Terminal 1 departure immigration, September 2026, all
 weekdays, 17:00–22:59. Apply filters to refresh the dashboard, export and assistant
 scope. Clicking a heatmap cell selects that weekday and hour. Filter changes
 must be applied before affecting the assistant. Each conversation message shows
-its scope; chat requests are independent, without hidden multi-turn memory.
+its scope. Use the expand button in Ask DMA for a full-screen workspace with a
+conversation sidebar and New chat. Successful exchanges, filters and retrieved
+sources are saved in the separate chat database. Reopening a conversation restores
+its last scope; choose **Use dashboard filters** to switch back to the dashboard.
+Follow-ups include the last six exchanges as context and retrieve fresh evidence.
+
+History uses a random browser profile identifier stored in localStorage, not user
+accounts. The same browser and site origin can reopen its chats after a restart;
+clearing browser storage loses that link. This identifier is a bearer credential,
+not a sign-in system. Add authentication before exposing the app to untrusted users.
+Failed provider requests are displayed but are not saved as completed exchanges.
 
 Metrics show selected-period averages, the percentage waiting over 30 minutes,
 estimated passengers affected and roster coverage. Review monthly compliance and

@@ -16,6 +16,7 @@ def path_setting(name: str, default: str) -> Path:
 @dataclass
 class Settings:
     database: Path = field(default_factory=lambda: path_setting('DMA_DATABASE_PATH', 'backend/data/database/airport_ops.db'))
+    chat_database: Path = field(default_factory=lambda: path_setting('DMA_CHAT_DATABASE_PATH', 'backend/data/chat/history.db'))
     documents: Path = field(default_factory=lambda: path_setting('DMA_DOCUMENTS_PATH', 'backend/data/documents'))
     api_key: str = field(default_factory=lambda: os.getenv('GEMINI_API_KEY', ''))
     model: str = field(default_factory=lambda: os.getenv('GEMINI_MODEL', ''))

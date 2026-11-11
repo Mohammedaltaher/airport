@@ -78,6 +78,7 @@ import '../styles/global.css';
         <div class="chat-heading">
           <span class="assistant-icon" aria-hidden="true">✧</span>
           <div><p class="eyebrow">Your evidence assistant</p><h2 id="assistant-title">Ask DMA</h2></div>
+          <button type="button" id="chat-fullscreen" class="chat-control" aria-label="Expand chat to full screen" aria-pressed="false" title="Full screen">⛶</button>
           <button type="button" id="chat-close" class="chat-close" aria-label="Close assistant">×</button>
         </div>
         <div id="ai-state" class="ai-state">Checking Gemini configuration…</div>
@@ -87,7 +88,19 @@ import '../styles/global.css';
           <button type="button" data-question="هل تتوافق أوقات الانتظار مع السياسة خلال الفترة المحددة؟">اسأل عن أوقات الانتظار</button>
         </div>
       </div>
-      <div class="assistant-workspace">
+      <div class="assistant-layout">
+        <aside class="chat-sidebar" aria-label="Conversation history">
+          <div class="history-heading"><span class="eyebrow">Your workspace</span><h3>Conversations</h3></div>
+          <button type="button" id="chat-new" class="button button-primary">＋ New chat</button>
+          <p class="history-caption">Saved on this browser’s history profile</p>
+          <p id="history-status" class="history-status" role="status">Your saved conversations will appear here.</p>
+          <button type="button" id="history-retry" class="history-retry" hidden>Retry loading history</button>
+          <nav id="chat-history" class="chat-history" aria-label="Saved conversations"></nav>
+          <p class="history-note">DMA · Evidence for better decisions</p>
+        </aside>
+        <div class="assistant-workspace">
+        <div class="conversation-heading"><h3 id="conversation-title">New conversation</h3><button type="button" id="chat-new-compact" class="history-retry">New chat</button></div>
+        <div class="chat-scope"><span id="chat-scope">Using selected dashboard filters</span><button type="button" id="chat-dashboard-scope" hidden>Use dashboard filters</button></div>
         <div class="assistant-conversation" id="conversation" aria-live="polite">
           <div class="assistant-welcome"><span aria-hidden="true">✧</span><h3>Facts first. Decisions informed.</h3><p>Ask about the selected terminal and period. Gemini is required for assistant answers.</p></div>
         </div>
@@ -96,6 +109,7 @@ import '../styles/global.css';
           <textarea id="question" rows="2" maxlength="2000" minlength="3" placeholder="Ask about queues, counters or applicable policies…" required dir="auto"></textarea>
           <div class="composer-footer"><span>English & العربية · selected dashboard filters</span><button id="send" class="button button-primary" type="submit">Ask DMA <span aria-hidden="true">↗</span></button></div>
         </form>
+        </div>
       </div>
     </section>
     <script>import '../scripts/dashboard';</script>

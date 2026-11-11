@@ -54,7 +54,7 @@ def settings(tmp_path):
         ])
         # Begins before the selected day and spans midnight.
         con.execute("INSERT INTO incidents VALUES ('I-1','2026-09-03',23,1140,'ALL','IT outage','High')")
-    return Settings(database=database, documents=PROJECT / 'backend/data/documents', api_key='', model='', logs=tmp_path / 'logs')
+    return Settings(database=database, chat_database=tmp_path / 'chat' / 'history.db', documents=PROJECT / 'backend/data/documents', api_key='', model='', logs=tmp_path / 'logs')
 
 
 @pytest.mark.parametrize('day,average,tail,peak', [
@@ -225,6 +225,24 @@ def test_assistant_provider_failure_timeout_and_round_limit(settings):
     with pytest.raises(RuntimeError, match='Tool-round limit'):
         asyncio.run(assistant.answer(AssistantRequest(question='Review queues')))
     assert assistant.gateway.generate.await_count == 6
+
+
+def test_assistant_uses_bounded_conversation_context_with_fresh_evidence(settings):
+    assistant = Assistant(settings, Analytics(settings), PolicyStore(settings.documents))
+    captured = []
+
+    async def generate(contents, use_tools=True):
+        captured.extend(contents)
+        return SimpleNamespace(function_calls=[], text='Verified follow-up')
+
+    assistant.gateway.generate = generate
+    history = [{'role': 'user' if index % 2 == 0 else 'assistant', 'content': f'Past message {index}',
+                'filters': Filters().model_dump(mode='json')} for index in range(16)]
+    asyncio.run(assistant.answer(AssistantRequest(question='What next?'), history=history))
+    assert len(captured) == 13
+    assert captured[0].role == 'user' and 'Past message 4' in captured[0].parts[0].text
+    assert captured[1].role == 'model'
+    assert 'verified_context' in captured[-1].parts[0].text and 'What next?' in captured[-1].parts[0].text
 
 
 def test_real_database_independent_sql(tmp_path):
